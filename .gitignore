@@ -38,4 +38,6 @@ Thumbs.db
 
 # Temporary files
 .commitmsg
+.msg
+.git_clean.mjs
 *.tmp
