@@ -2,6 +2,7 @@ import path from 'node:path';
 import { AgentForgeRuntime } from '@agentforge/core';
 import { LLMProviderFactory } from '@agentforge/llm';
 import { ReActAgent, AgentStepEvent } from '@agentforge/agent';
+import { MCPClientManager } from '@agentforge/mcp';
 import {
   printBanner,
   printHeading,
@@ -18,6 +19,7 @@ export interface RunCommandOptions {
   model?: string;
   temperature?: number;
   isolated?: boolean;
+  interactive?: boolean;
 }
 
 export async function runCommand(
@@ -38,6 +40,17 @@ export async function runCommand(
   printInfo(`Workspace: ${pc.dim(runtime.workspaceRoot)}`);
   printInfo(`AI Provider: ${pc.bold(providerType)} | Model: ${pc.bold(model)}`);
   printInfo(`Permission Level: ${pc.bold(config.security.permissionLevel)}`);
+
+  // Automatic Git Checkpoint (if repo)
+  try {
+    const isGit = await runtime.git.isGitRepo();
+    if (isGit && !options.isolated) {
+      const cp = await runtime.git.createCheckpoint(`task_${session.id}`);
+      printInfo(`Git Checkpoint saved: ${pc.green(cp.id)} (use 'agentforge rollback' to undo)`);
+    }
+  } catch {
+    // Non-fatal if checkpoint can't be created
+  }
 
   let effectiveRuntime = runtime;
   let shadowWorktreeDir: string | null = null;
@@ -173,10 +186,21 @@ export async function runCommand(
     return !!res.value;
   };
 
+  const mcpManager = new MCPClientManager(effectiveRuntime);
+  try {
+    const remoteTools = await mcpManager.connectAll(config.mcpServers);
+    if (remoteTools > 0) {
+      printInfo(`Loaded ${remoteTools} external tool(s) from configured MCP server(s).`);
+    }
+  } catch {
+    // Non-fatal
+  }
+
   try {
     const result = await agent.runTask(task, {
       maxSteps: options.maxSteps || 25,
       temperature: options.temperature,
+      interactive: options.interactive,
       onEvent,
       confirmAction,
     });
@@ -200,6 +224,7 @@ export async function runCommand(
       }
     }
   } finally {
+    mcpManager.disconnectAll();
     if (shadowWorktreeDir) {
       try {
         printInfo('Cleaning up temporary shadow worktree...');

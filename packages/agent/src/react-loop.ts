@@ -28,6 +28,7 @@ export interface AgentStepEvent {
 export interface ReActLoopOptions {
   maxSteps?: number;
   temperature?: number;
+  interactive?: boolean;
   onEvent?: (event: AgentStepEvent) => void;
   onToken?: (token: string) => void;
   confirmAction?: (prompt: string, details?: Record<string, unknown>) => Promise<boolean>;
@@ -234,9 +235,23 @@ export class ReActAgent {
       };
     }
 
-    if (permission.verdict === 'require_confirmation' && options.confirmAction) {
+    const requiresInteractiveCheck =
+      options.interactive &&
+      (tool.category === 'write' ||
+        tool.category === 'execute' ||
+        tool.category === 'git' ||
+        tool.requiresConfirmation);
+
+    if (
+      (permission.verdict === 'require_confirmation' || requiresInteractiveCheck) &&
+      options.confirmAction
+    ) {
+      const promptLabel = requiresInteractiveCheck
+        ? `[Interactive Mode] Approve execution of tool "${tool.name}"?`
+        : `AgentForge requests permission to execute ${tool.name}`;
+
       const confirmed = await options.confirmAction(
-        `AgentForge requests permission to execute ${tool.name}`,
+        promptLabel,
         toolCall.arguments,
       );
 

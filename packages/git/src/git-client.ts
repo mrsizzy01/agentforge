@@ -283,5 +283,120 @@ export class GitClient {
 
     return worktrees;
   }
+
+  /**
+   * Creates a snapshot checkpoint of current working directory (including untracked files).
+   */
+  public async createCheckpoint(label: string = 'auto'): Promise<{ id: string; label: string; ref: string }> {
+    const isRepo = await this.isGitRepo();
+    if (!isRepo) {
+      throw new Error('Cannot create checkpoint: not a git repository');
+    }
+
+    const id = `cp_${Date.now()}`;
+    const stashMsg = `agentforge-checkpoint:${id}:${label}`;
+
+    // Push with untracked files and then re-apply so working directory is untouched
+    const pushRes = await this.executor.execute(
+      `git stash push --include-untracked -m "${stashMsg}"`,
+      { cwd: this.workspaceRoot },
+    );
+
+    if (pushRes.exitCode !== 0) {
+      throw new Error(`Failed to create checkpoint: ${pushRes.stderr || pushRes.stdout}`);
+    }
+
+    // Check if anything was actually stashed
+    if (pushRes.stdout.includes('No local changes to save')) {
+      // Create empty checkpoint reference for HEAD
+      return { id, label, ref: 'HEAD' };
+    }
+
+    // Immediately restore workspace state so user keeps working uninterrupted
+    await this.executor.execute('git stash apply stash@{0}', { cwd: this.workspaceRoot });
+
+    return { id, label, ref: 'stash@{0}' };
+  }
+
+  /**
+   * Lists all AgentForge checkpoints in the repository.
+   */
+  public async listCheckpoints(): Promise<
+    Array<{ id: string; index: number; label: string; ref: string; raw: string }>
+  > {
+    const isRepo = await this.isGitRepo();
+    if (!isRepo) {
+      return [];
+    }
+
+    const res = await this.executor.execute('git stash list', { cwd: this.workspaceRoot });
+    if (res.exitCode !== 0) {
+      return [];
+    }
+
+    const lines = res.stdout.split(/\r?\n/).filter(Boolean);
+    const checkpoints: Array<{ id: string; index: number; label: string; ref: string; raw: string }> = [];
+
+    for (const line of lines) {
+      const match = line.match(/^stash@\{(\d+)\}:\s+.*agentforge-checkpoint:([^:]+):(.*)$/);
+      if (match) {
+        const index = parseInt(match[1], 10);
+        const id = match[2];
+        const label = match[3];
+        checkpoints.push({
+          id,
+          index,
+          label,
+          ref: `stash@{${index}}`,
+          raw: line,
+        });
+      }
+    }
+
+    return checkpoints;
+  }
+
+  /**
+   * Restores the workspace to a specific checkpoint, resetting changes.
+   */
+  public async restoreCheckpoint(target?: string): Promise<void> {
+    const isRepo = await this.isGitRepo();
+    if (!isRepo) {
+      throw new Error('Cannot restore checkpoint: not a git repository');
+    }
+
+    const checkpoints = await this.listCheckpoints();
+    let targetRef: string | null = null;
+
+    if (!target) {
+      if (checkpoints.length === 0) {
+        // If no stash checkpoint, reset to HEAD
+        await this.executor.execute('git reset --hard HEAD', { cwd: this.workspaceRoot });
+        await this.executor.execute('git clean -fd', { cwd: this.workspaceRoot });
+        return;
+      }
+      targetRef = checkpoints[0].ref;
+    } else {
+      const found = checkpoints.find((c) => c.id === target || c.ref === target);
+      if (found) {
+        targetRef = found.ref;
+      } else {
+        targetRef = target;
+      }
+    }
+
+    // Clean current working directory
+    await this.executor.execute('git reset --hard HEAD', { cwd: this.workspaceRoot });
+    await this.executor.execute('git clean -fd', { cwd: this.workspaceRoot });
+
+    if (targetRef && targetRef !== 'HEAD') {
+      const applyRes = await this.executor.execute(`git stash apply "${targetRef}"`, {
+        cwd: this.workspaceRoot,
+      });
+      if (applyRes.exitCode !== 0) {
+        throw new Error(`Failed to restore checkpoint ${targetRef}: ${applyRes.stderr || applyRes.stdout}`);
+      }
+    }
+  }
 }
 

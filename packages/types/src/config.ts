@@ -38,12 +38,22 @@ export const ProviderConfigSchema = z.object({
 });
 export type ProviderConfig = z.infer<typeof ProviderConfigSchema>;
 
+export const McpServerConfigSchema = z.object({
+  command: z.string(),
+  args: z.array(z.string()).default([]),
+  env: z.record(z.string()).default({}),
+  cwd: z.string().optional(),
+});
+export type McpServerConfig = z.infer<typeof McpServerConfigSchema>;
+
 export const AgentForgeConfigSchema = z.object({
   version: z.string().default('0.1.0'),
   telemetry: z.boolean().default(false),
   logLevel: z.enum(['debug', 'info', 'warn', 'error']).default('info'),
   security: SecurityConfigSchema.default({}),
   provider: ProviderConfigSchema.default({}),
+  mcpServers: z.record(McpServerConfigSchema).default({}),
   customInstructionsFile: z.string().default('AGENTFORGE.md'),
 });
 export type AgentForgeConfig = z.infer<typeof AgentForgeConfigSchema>;
+

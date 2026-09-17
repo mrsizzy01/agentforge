@@ -89,6 +89,7 @@ export function createCli(): Command {
     .option('--model <model>', 'Override model identifier')
     .option('--temperature <temp>', 'Sampling temperature')
     .option('--isolated', 'Run task in a temporary shadow Git worktree')
+    .option('-i, --interactive', 'Prompt for confirmation before executing file edits or terminal commands')
     .action(async (task, options, cmd) => {
       const runtime = getRuntime(cmd);
       await runCommand(runtime, task, {
@@ -96,6 +97,21 @@ export function createCli(): Command {
         model: options.model,
         temperature: options.temperature ? parseFloat(options.temperature) : undefined,
         isolated: !!options.isolated,
+        interactive: !!options.interactive,
+      });
+    });
+
+  program
+    .command('rollback [target]')
+    .alias('undo')
+    .description('Rollback workspace to a previous checkpoint or session snapshot')
+    .option('--list', 'List all available checkpoints and sessions')
+    .option('--git', 'Force Git checkpoint rollback')
+    .action(async (target, options, cmd) => {
+      const runtime = getRuntime(cmd);
+      await rollbackCommand(runtime, target, {
+        list: !!options.list,
+        git: !!options.git,
       });
     });
 
@@ -117,14 +133,6 @@ export function createCli(): Command {
     .action(async (_options, cmd) => {
       const runtime = getRuntime(cmd);
       await historyCommand(runtime);
-    });
-
-  program
-    .command('rollback [sessionId]')
-    .description('Rollback files modified by AgentForge to previous snapshots')
-    .action(async (sessionId, _options, cmd) => {
-      const runtime = getRuntime(cmd);
-      await rollbackCommand(runtime, sessionId);
     });
 
   program

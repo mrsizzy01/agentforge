@@ -452,6 +452,9 @@ importers:
       '@agentforge/types':
         specifier: workspace:*
         version: link:../types
+      typescript:
+        specifier: ^5.7.3
+        version: 5.9.3
       zod:
         specifier: ^3.24.2
         version: 3.25.76
@@ -465,9 +468,6 @@ importers:
       tsup:
         specifier: ^8.4.0
         version: 8.5.1(postcss@8.5.28)(supports-color@7.2.0)(tsx@4.23.13)(typescript@5.9.3)
-      typescript:
-        specifier: ^5.7.3
-        version: 5.9.3
       vitest:
         specifier: ^3.0.7
         version: 3.2.7(@types/node@22.20.3)(supports-color@7.2.0)(tsx@4.23.13)
