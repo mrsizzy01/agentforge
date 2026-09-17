@@ -85,13 +85,13 @@ export class Logger {
   private getPrefix(level: LogLevel): string {
     switch (level) {
       case 'debug':
-        return pc.gray('● [DEBUG]');
+        return pc.gray('[DEBUG]');
       case 'info':
-        return pc.cyan('✓ [INFO] ');
+        return pc.cyan('[INFO]');
       case 'warn':
-        return pc.yellow('▲ [WARN] ');
+        return pc.yellow('[WARN]');
       case 'error':
-        return pc.red('✖ [ERROR]');
+        return pc.red('[ERROR]');
     }
   }
 }

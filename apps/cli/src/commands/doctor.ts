@@ -64,6 +64,6 @@ export async function doctorCommand(runtime: AgentForgeRuntime): Promise<number>
   }
 
   // eslint-disable-next-line no-console
-  console.log('\n' + (hasIssues ? pc.red('✖ Diagnostics completed with issues.') : pc.green('✓ All core foundation checks passed.')));
+  console.log('\n' + (hasIssues ? pc.red('[FAIL] Diagnostics completed with issues.') : pc.green('[OK] All core foundation checks passed.')));
   return hasIssues ? 1 : 0;
 }

@@ -12,22 +12,22 @@ export function printBanner(): void {
 
 export function printSuccess(message: string): void {
   // eslint-disable-next-line no-console
-  console.log(pc.green('✓ ') + message);
+  console.log(pc.green('[OK] ') + message);
 }
 
 export function printInfo(message: string): void {
   // eslint-disable-next-line no-console
-  console.log(pc.cyan('● ') + message);
+  console.log(pc.cyan('[INFO] ') + message);
 }
 
 export function printWarn(message: string): void {
   // eslint-disable-next-line no-console
-  console.log(pc.yellow('▲ ') + message);
+  console.log(pc.yellow('[WARN] ') + message);
 }
 
 export function printError(message: string): void {
   // eslint-disable-next-line no-console
-  console.error(pc.red('✖ ') + message);
+  console.error(pc.red('[FAIL] ') + message);
 }
 
 export function printHeading(title: string): void {

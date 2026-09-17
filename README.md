@@ -36,12 +36,12 @@ AgentForge Monorepo
 
 ## Key Features (Phase 1: Foundation)
 
-- 🔒 **Defense-in-Depth Security**: Workspace path-traversal blocker, secret detection & redaction, dangerous command inspection (`rm -rf`, disk wipes, fork bombs), and human-in-the-loop permission tiers (`readonly`, `safe`, `interactive`, `autonomous`).
-- 📁 **Sandboxed Filesystem**: Atomic file writes, targeted multi-chunk code edits, file size safeguards, binary detection, and recursive search.
-- ⚡ **Safe Terminal Execution**: Cross-platform process execution with configurable timeouts, buffer limit protections, and secret scrubbing on stdout/stderr.
-- 🐙 **Native Git Integration**: Structured branch/status detection, unified diffs, commit log parsing, and commit generation with message checks.
-- ⚙️ **Modular Tool Registry**: 12 built-in tools with full JSON Schema / OpenAPI schema export, ready for LLM function calling.
-- 🩺 **System Diagnostics**: Built-in `agentforge doctor` verifying Node, Git, Workspace permissions, and tool health.
+- **Defense-in-Depth Security**: Workspace path-traversal blocker, secret detection & redaction, dangerous command inspection (`rm -rf`, disk wipes, fork bombs), and human-in-the-loop permission tiers (`readonly`, `safe`, `interactive`, `autonomous`).
+- **Sandboxed Filesystem**: Atomic file writes, targeted multi-chunk code edits, file size safeguards, binary detection, and recursive search.
+- **Safe Terminal Execution**: Cross-platform process execution with configurable timeouts, buffer limit protections, and secret scrubbing on stdout/stderr.
+- **Native Git Integration**: Structured branch/status detection, unified diffs, commit log parsing, and commit generation with message checks.
+- **Modular Tool Registry**: 12 built-in tools with full JSON Schema / OpenAPI schema export, ready for LLM function calling.
+- **System Diagnostics**: Built-in `agentforge doctor` verifying Node, Git, Workspace permissions, and tool health.
 
 ---
 
