@@ -133,6 +133,114 @@ export class WorkspaceFilesystem {
     await fs.promises.rename(tempFile, resolved);
   }
 
+  /**
+   * Applies an edit chunk with multi-tier fuzzy matching:
+   * 1. Exact literal match
+   * 2. Line-ending normalized match (\r\n <-> \n)
+   * 3. Whitespace & relative-indent tolerant sliding-window line match
+   */
+  public static applyFuzzyEdit(
+    content: string,
+    oldContent: string,
+    newContent: string,
+    chunkIndex: number = 1,
+  ): string {
+    if (!oldContent) {
+      throw new Error(`Edit chunk #${chunkIndex} has empty oldContent.`);
+    }
+
+    // 1. Tier 1: Exact literal match
+    const exactOccurrences = content.split(oldContent).length - 1;
+    if (exactOccurrences === 1) {
+      return content.replace(oldContent, newContent);
+    }
+    if (exactOccurrences > 1) {
+      throw new Error(
+        `Edit failed for chunk #${chunkIndex}: target text appears ${exactOccurrences} times. Must be unique.`,
+      );
+    }
+
+    // 2. Tier 2: Line-ending normalized match (\r\n <-> \n)
+    const normalizedContent = content.replace(/\r\n/g, '\n');
+    const normalizedOld = oldContent.replace(/\r\n/g, '\n');
+    const normalizedNew = newContent.replace(/\r\n/g, '\n');
+
+    const normOccurrences = normalizedContent.split(normalizedOld).length - 1;
+    if (normOccurrences === 1) {
+      const isCRLF = content.includes('\r\n');
+      const replaced = normalizedContent.replace(normalizedOld, normalizedNew);
+      return isCRLF ? replaced.replace(/\n/g, '\r\n') : replaced;
+    }
+    if (normOccurrences > 1) {
+      throw new Error(
+        `Edit failed for chunk #${chunkIndex}: target text appears ${normOccurrences} times after line-ending normalization. Must be unique.`,
+      );
+    }
+
+    // 3. Tier 3: Whitespace-tolerant sliding-window line match
+    const contentLines = normalizedContent.split('\n');
+    const oldLines = normalizedOld.split('\n');
+    const oldTrimmed = oldLines.map((l) => l.trim());
+
+    // Skip leading/trailing empty lines in oldContent for matching anchor
+    let startOffset = 0;
+    while (startOffset < oldTrimmed.length && oldTrimmed[startOffset] === '') {
+      startOffset++;
+    }
+    let endOffset = oldTrimmed.length - 1;
+    while (endOffset >= 0 && oldTrimmed[endOffset] === '') {
+      endOffset--;
+    }
+
+    if (startOffset > endOffset) {
+      throw new Error(`Edit chunk #${chunkIndex} contains only whitespace.`);
+    }
+
+    const anchorLength = endOffset - startOffset + 1;
+    const anchorTrimmed = oldTrimmed.slice(startOffset, endOffset + 1);
+
+    const matches: number[] = [];
+    for (let i = 0; i <= contentLines.length - anchorLength; i++) {
+      let allMatch = true;
+      for (let j = 0; j < anchorLength; j++) {
+        if (contentLines[i + j].trim() !== anchorTrimmed[j]) {
+          allMatch = false;
+          break;
+        }
+      }
+      if (allMatch) {
+        matches.push(i);
+      }
+    }
+
+    if (matches.length === 1) {
+      const matchIndex = matches[0];
+      const actualStart = Math.max(0, matchIndex - startOffset);
+      const actualEnd = Math.min(
+        contentLines.length,
+        matchIndex + anchorLength + (oldLines.length - 1 - endOffset),
+      );
+
+      const newLines = normalizedNew.split('\n');
+      const before = contentLines.slice(0, actualStart);
+      const after = contentLines.slice(actualEnd);
+
+      const isCRLF = content.includes('\r\n');
+      const result = [...before, ...newLines, ...after].join('\n');
+      return isCRLF ? result.replace(/\n/g, '\r\n') : result;
+    }
+
+    if (matches.length > 1) {
+      throw new Error(
+        `Edit failed for chunk #${chunkIndex}: fuzzy match found ${matches.length} matching locations in file. Add more surrounding context to make it unique.`,
+      );
+    }
+
+    throw new Error(
+      `Edit failed for chunk #${chunkIndex}: target text not found in file (tried exact, line-ending, and whitespace-tolerant matching).`,
+    );
+  }
+
   public async editFile(
     targetPath: string,
     edits: FileEditChunk[],
@@ -141,22 +249,12 @@ export class WorkspaceFilesystem {
     let updated = current;
 
     for (let i = 0; i < edits.length; i++) {
-      const { oldContent, newContent } = edits[i];
-      if (!oldContent) {
-        throw new Error(`Edit chunk #${i + 1} has empty oldContent.`);
-      }
-
-      const occurrences = updated.split(oldContent).length - 1;
-      if (occurrences === 0) {
-        throw new Error(`Edit failed for chunk #${i + 1}: target text not found in file.`);
-      }
-      if (occurrences > 1) {
-        throw new Error(
-          `Edit failed for chunk #${i + 1}: target text appears ${occurrences} times. Must be unique.`,
-        );
-      }
-
-      updated = updated.replace(oldContent, newContent);
+      updated = WorkspaceFilesystem.applyFuzzyEdit(
+        updated,
+        edits[i].oldContent,
+        edits[i].newContent,
+        i + 1,
+      );
     }
 
     await this.writeFile(targetPath, updated);

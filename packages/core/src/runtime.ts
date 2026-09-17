@@ -32,6 +32,7 @@ import {
   GetFileOutlineTool,
   FindSymbolsTool,
   PlanTool,
+  CheckDiagnosticsTool,
   ReadUrlTool,
 } from '@agentforge/tools';
 import { Logger } from './logger.js';
@@ -146,6 +147,7 @@ export class AgentForgeRuntime {
     this.registry.register(new GetFileOutlineTool(this.fs));
     this.registry.register(new FindSymbolsTool(this.fs));
     this.registry.register(new PlanTool());
+    this.registry.register(new CheckDiagnosticsTool(this.fs));
 
     // Web tools
     this.registry.register(new ReadUrlTool());

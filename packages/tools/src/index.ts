@@ -19,4 +19,5 @@ export * from './git/diff-review.js';
 export * from './intelligence/outline.js';
 export * from './intelligence/symbols.js';
 export * from './intelligence/plan.js';
+export * from './intelligence/diagnostic.js';
 export * from './web/read-url.js';

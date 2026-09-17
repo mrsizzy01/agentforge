@@ -23,7 +23,7 @@ describe('AgentForgeRuntime', () => {
     const runtime = new AgentForgeRuntime({ workspaceRoot: tempDir });
     const tools = runtime.registry.getAll();
 
-    expect(tools.length).toBe(19);
+    expect(tools.length).toBe(20);
     expect(runtime.registry.has('read_file')).toBe(true);
     expect(runtime.registry.has('write_file')).toBe(true);
     expect(runtime.registry.has('edit_file')).toBe(true);
@@ -42,6 +42,7 @@ describe('AgentForgeRuntime', () => {
     expect(runtime.registry.has('git_commit')).toBe(true);
     expect(runtime.registry.has('diff_review')).toBe(true);
     expect(runtime.registry.has('create_plan')).toBe(true);
+    expect(runtime.registry.has('check_diagnostics')).toBe(true);
     expect(runtime.registry.has('read_url')).toBe(true);
   });
 

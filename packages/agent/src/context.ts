@@ -97,8 +97,17 @@ export class ContextManager {
     }
 
     const firstUserMsg = nonSystem[0];
-    const toCompact = nonSystem.slice(1, nonSystem.length - keepRecentCount);
-    const recentMessages = nonSystem.slice(nonSystem.length - keepRecentCount);
+
+    // Find safe atomic cut boundary so we never cut between assistant [toolCalls] and tool results
+    let cutIndex = nonSystem.length - keepRecentCount;
+    // If cutIndex lands on a 'tool' message, move cutIndex backwards to include the assistant message in recent,
+    // or forward to include the whole transaction in compacted.
+    while (cutIndex > 1 && nonSystem[cutIndex]?.role === 'tool') {
+      cutIndex--;
+    }
+
+    const toCompact = nonSystem.slice(1, cutIndex);
+    const recentMessages = nonSystem.slice(cutIndex);
 
     if (toCompact.length === 0) {
       return { compacted: false, removedCount: 0 };
@@ -126,10 +135,48 @@ export class ContextManager {
     newMessages.push(summaryBlock);
     newMessages.push(...recentMessages);
 
-    const removedCount = this.messages.length - newMessages.length;
-    this.messages = newMessages;
+    // Validate atomic integrity: ensure no orphaned tool messages
+    const validated = ContextManager.ensureAtomicIntegrity(newMessages);
+
+    const removedCount = this.messages.length - validated.length;
+    this.messages = validated;
 
     return { compacted: true, removedCount };
+  }
+
+  /**
+   * Ensures that every tool message is preceded by an assistant message containing the matching tool_call_id.
+   * Any orphaned tool message that lost its parent assistant call is safely purged.
+   */
+  public static ensureAtomicIntegrity(messages: ChatMessage[]): ChatMessage[] {
+    const validMessages: ChatMessage[] = [];
+    const activeToolCallIds = new Set<string>();
+
+    for (let i = 0; i < messages.length; i++) {
+      const msg = messages[i];
+
+      if (msg.role === 'assistant') {
+        activeToolCallIds.clear();
+        if (msg.toolCalls && msg.toolCalls.length > 0) {
+          for (const tc of msg.toolCalls) {
+            activeToolCallIds.add(tc.id);
+          }
+        }
+        validMessages.push(msg);
+      } else if (msg.role === 'tool') {
+        // Only keep if the active assistant message requested this tool call
+        if (msg.toolCallId && activeToolCallIds.has(msg.toolCallId)) {
+          validMessages.push(msg);
+        }
+        // If orphaned, drop it to prevent HTTP 400 from LLM providers
+      } else {
+        // User or system messages reset active tool calls
+        activeToolCallIds.clear();
+        validMessages.push(msg);
+      }
+    }
+
+    return validMessages;
   }
 
   private trimHistory(): void {
@@ -142,9 +189,19 @@ export class ContextManager {
     const conversationMessages = this.messages.filter((m) => m.role !== 'system');
 
     if (conversationMessages.length > this.maxHistoryMessages) {
-      const excess = conversationMessages.length - this.maxHistoryMessages;
+      let excess = conversationMessages.length - this.maxHistoryMessages;
+
+      // Adjust excess index so we never cut between assistant tool_calls and tool results
+      while (
+        excess < conversationMessages.length &&
+        conversationMessages[excess]?.role === 'tool'
+      ) {
+        excess++;
+      }
+
       const pruned = conversationMessages.slice(excess);
-      this.messages = [...systemMessages, ...pruned];
+      const validated = ContextManager.ensureAtomicIntegrity([...systemMessages, ...pruned]);
+      this.messages = validated;
     }
   }
 }

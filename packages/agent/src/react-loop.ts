@@ -155,36 +155,70 @@ export class ReActAgent {
         };
       }
 
-      // Execute each tool call
-      for (const toolCall of response.toolCalls!) {
-        options.onEvent?.({
-          step: stepsExecuted,
-          maxSteps,
-          toolCall: {
-            name: toolCall.name,
-            arguments: toolCall.arguments,
-          },
-        });
+      // Group tool calls into execution batches:
+      // Consecutive read-only tools run in parallel via Promise.all()
+      // State-mutating tools ('write', 'execute', 'git', etc.) remain strictly serial
+      const batches: ToolCall[][] = [];
+      let currentBatch: ToolCall[] = [];
+      let currentBatchIsRead = false;
 
-        const toolResult = await this.executeTool(toolCall, options);
+      for (const tc of response.toolCalls!) {
+        const toolDef = this.runtime.tools.get(tc.name);
+        const isRead = toolDef?.category === 'read';
 
-        const outputStr = toolResult.success
-          ? typeof toolResult.data === 'string'
-            ? toolResult.data
-            : JSON.stringify(toolResult.data, null, 2)
-          : `[FAIL] Tool execution failed: ${toolResult.error}`;
+        if (currentBatch.length === 0) {
+          currentBatch.push(tc);
+          currentBatchIsRead = isRead;
+        } else if (isRead && currentBatchIsRead) {
+          currentBatch.push(tc);
+        } else {
+          batches.push(currentBatch);
+          currentBatch = [tc];
+          currentBatchIsRead = isRead;
+        }
+      }
+      if (currentBatch.length > 0) {
+        batches.push(currentBatch);
+      }
 
-        options.onEvent?.({
-          step: stepsExecuted,
-          maxSteps,
-          toolResult: {
-            name: toolCall.name,
-            success: toolResult.success,
-            output: outputStr,
-          },
-        });
+      for (const batch of batches) {
+        for (const tc of batch) {
+          options.onEvent?.({
+            step: stepsExecuted,
+            maxSteps,
+            toolCall: {
+              name: tc.name,
+              arguments: tc.arguments,
+            },
+          });
+        }
 
-        this.context.addToolResult(toolCall.id, toolCall.name, outputStr);
+        const results = await Promise.all(
+          batch.map((tc) => this.executeTool(tc, options)),
+        );
+
+        for (let i = 0; i < batch.length; i++) {
+          const tc = batch[i];
+          const toolResult = results[i];
+
+          const outputStr = toolResult.success
+            ? typeof toolResult.data === 'string'
+              ? toolResult.data
+              : JSON.stringify(toolResult.data, null, 2)
+            : `[FAIL] Tool execution failed: ${toolResult.error}`;
+
+          options.onEvent?.({
+            step: stepsExecuted,
+            maxSteps,
+            toolResult: {
+              name: tc.name,
+              success: toolResult.success,
+              output: outputStr,
+            },
+          });
+
+          this.context.addToolResult(tc.id, tc.name, outputStr);
+        }
       }
     }
 
