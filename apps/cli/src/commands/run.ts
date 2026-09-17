@@ -1,3 +1,4 @@
+import path from 'node:path';
 import { AgentForgeRuntime } from '@agentforge/core';
 import { LLMProviderFactory } from '@agentforge/llm';
 import { ReActAgent, AgentStepEvent } from '@agentforge/agent';
@@ -16,6 +17,7 @@ export interface RunCommandOptions {
   maxSteps?: number;
   model?: string;
   temperature?: number;
+  isolated?: boolean;
 }
 
 export async function runCommand(
@@ -30,11 +32,39 @@ export async function runCommand(
   const providerType = config.provider.type;
   const model = options.model || config.provider.model;
 
+  // Session Journaling
+  const session = runtime.sessions.createSession(task);
+  printInfo(`Session: ${pc.bold(session.id)}`);
   printInfo(`Workspace: ${pc.dim(runtime.workspaceRoot)}`);
   printInfo(`AI Provider: ${pc.bold(providerType)} | Model: ${pc.bold(model)}`);
   printInfo(`Permission Level: ${pc.bold(config.security.permissionLevel)}`);
 
-  // Check if provider has required credentials or defaults
+  let effectiveRuntime = runtime;
+  let shadowWorktreeDir: string | null = null;
+
+  if (options.isolated) {
+    try {
+      const isGit = await runtime.git.isGitRepo();
+      if (isGit) {
+        shadowWorktreeDir = path.join(runtime.workspaceRoot, '.agentforge', 'worktrees', session.id);
+        const branch = `agentforge/${session.id}`;
+        printInfo(`Shadow Workspace: Creating isolated worktree at ${pc.dim(shadowWorktreeDir)}...`);
+        await runtime.git.createWorktree(shadowWorktreeDir, branch);
+
+        effectiveRuntime = new AgentForgeRuntime({
+          workspaceRoot: shadowWorktreeDir,
+          isInteractive: runtime.isInteractive,
+        });
+        printSuccess(`Running task in isolated sandbox (branch: ${branch})`);
+      } else {
+        printWarn('Cannot run in isolated mode: workspace is not a Git repository. Falling back to in-place execution.');
+      }
+    } catch (err) {
+      printWarn(`Failed to create shadow worktree (${err instanceof Error ? err.message : String(err)}). Falling back to in-place execution.`);
+    }
+  }
+
+  // Check credentials
   const env = process.env;
   const hasKey =
     config.provider.apiKey ||
@@ -46,6 +76,7 @@ export async function runCommand(
     providerType === 'lmstudio';
 
   if (!hasKey) {
+    runtime.sessions.completeSession(session.id, 'failed');
     printWarn(
       `No API key configured for provider "${providerType}".\n` +
         `To configure a cloud provider:\n` +
@@ -68,36 +99,46 @@ export async function runCommand(
       maxTokens: config.provider.maxTokens,
     });
   } catch (err) {
+    runtime.sessions.completeSession(session.id, 'failed');
     printError(
       `Failed to initialize AI provider: ${err instanceof Error ? err.message : String(err)}`,
     );
     return;
   }
 
-  const agent = new ReActAgent(runtime, provider);
-  const instructions = runtime.getProjectInstructions();
+  const agent = new ReActAgent(effectiveRuntime, provider);
+  const instructions = effectiveRuntime.getProjectInstructions();
   await agent.initialize(instructions);
 
   printHeading('Starting ReAct Reasoning & Execution Loop');
 
-  const onEvent = (event: AgentStepEvent) => {
+  const onEvent = async (event: AgentStepEvent) => {
     if (event.thought) {
       // eslint-disable-next-line no-console
-      console.log(pc.cyan(`\n[THINK] `) + event.thought.trim());
+      console.log(pc.cyan(`\n● `) + event.thought.trim());
     }
 
     if (event.toolCall) {
+      // Automatically snapshot modified files before tool execution
+      const toolName = event.toolCall.name;
+      if (['write_file', 'edit_file', 'delete_file'].includes(toolName)) {
+        const filePath = (event.toolCall.arguments as { path?: string }).path;
+        if (filePath) {
+          await runtime.sessions.recordFileBackup(session.id, filePath);
+        }
+      }
+
       const argsPreview = JSON.stringify(event.toolCall.arguments);
       // eslint-disable-next-line no-console
       console.log(
-        pc.yellow(`[TOOL] `) +
+        pc.yellow(`▲ `) +
           pc.bold(event.toolCall.name) +
           pc.dim(` ${argsPreview.length > 120 ? argsPreview.slice(0, 120) + '...' : argsPreview}`),
       );
     }
 
     if (event.toolResult) {
-      const statusBadge = event.toolResult.success ? pc.green('[OK]') : pc.red('[FAIL]');
+      const statusBadge = event.toolResult.success ? pc.green('✓') : pc.red('✖');
       const preview = event.toolResult.output.trim();
       // eslint-disable-next-line no-console
       console.log(
@@ -116,7 +157,7 @@ export async function runCommand(
     }
 
     // eslint-disable-next-line no-console
-    console.log(pc.yellow(`\n[SECURITY CONFIRMATION REQUIRED]`));
+    console.log(pc.yellow(`\n▲ Security confirmation required`));
     if (details) {
       // eslint-disable-next-line no-console
       console.log(pc.dim(JSON.stringify(details, null, 2)));
@@ -132,25 +173,40 @@ export async function runCommand(
     return !!res.value;
   };
 
-  const result = await agent.runTask(task, {
-    maxSteps: options.maxSteps || 25,
-    temperature: options.temperature,
-    onEvent,
-    confirmAction,
-  });
+  try {
+    const result = await agent.runTask(task, {
+      maxSteps: options.maxSteps || 25,
+      temperature: options.temperature,
+      onEvent,
+      confirmAction,
+    });
 
-  if (result.success) {
-    printHeading('Task Execution Completed');
-    printSuccess(result.finalAnswer || 'Task completed successfully.');
-    printInfo(`Steps executed: ${result.stepsExecuted}`);
-  } else {
-    printHeading('Task Execution Stopped');
-    if (result.error) {
-      printError(result.error);
+    runtime.sessions.completeSession(session.id, result.success ? 'completed' : 'failed');
+
+    if (result.success) {
+      printHeading('Task Execution Completed');
+      printSuccess(result.finalAnswer || 'Task completed successfully.');
+      printInfo(`Steps executed: ${result.stepsExecuted}`);
+      printInfo(`To rollback changes made in this session: agentforge rollback ${session.id}`);
+    } else {
+      printHeading('Task Execution Stopped');
+      if (result.error) {
+        printError(result.error);
+      }
+      if (result.finalAnswer) {
+        // eslint-disable-next-line no-console
+        console.log(result.finalAnswer);
+      }
     }
-    if (result.finalAnswer) {
-      // eslint-disable-next-line no-console
-      console.log(result.finalAnswer);
+  } finally {
+    if (shadowWorktreeDir) {
+      try {
+        printInfo('Cleaning up temporary shadow worktree...');
+        await runtime.git.removeWorktree(shadowWorktreeDir, true);
+        printSuccess('Shadow worktree cleaned up.');
+      } catch {
+        // Ignore cleanup error
+      }
     }
   }
 }

@@ -67,8 +67,20 @@ export interface ProviderConfig {
   timeoutMs?: number;
 }
 
+export interface StreamChunk {
+  deltaText?: string;
+  toolCallDelta?: {
+    index: number;
+    id?: string;
+    name?: string;
+    argumentsDelta?: string;
+  };
+  finishReason?: string;
+}
+
 export interface LLMProvider {
   readonly id: string;
   readonly defaultModel: string;
   complete(request: LLMCompletionRequest): Promise<LLMCompletionResponse>;
+  stream?(request: LLMCompletionRequest): AsyncIterable<StreamChunk>;
 }

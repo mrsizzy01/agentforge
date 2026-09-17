@@ -8,6 +8,9 @@ import { gitCommand } from './commands/git.js';
 import { runCommand } from './commands/run.js';
 import { chatCommand } from './commands/chat.js';
 import { fixCommand } from './commands/fix.js';
+import { mcpServeCommand } from './commands/mcp.js';
+import { historyCommand } from './commands/history.js';
+import { rollbackCommand } from './commands/rollback.js';
 
 export function createCli(): Command {
   const program = new Command();
@@ -83,12 +86,14 @@ export function createCli(): Command {
     .option('--max-steps <n>', 'Maximum reasoning steps', '25')
     .option('--model <model>', 'Override model identifier')
     .option('--temperature <temp>', 'Sampling temperature')
+    .option('--isolated', 'Run task in a temporary shadow Git worktree')
     .action(async (task, options, cmd) => {
       const runtime = getRuntime(cmd);
       await runCommand(runtime, task, {
         maxSteps: options.maxSteps ? parseInt(options.maxSteps, 10) : undefined,
         model: options.model,
         temperature: options.temperature ? parseFloat(options.temperature) : undefined,
+        isolated: !!options.isolated,
       });
     });
 
@@ -102,6 +107,36 @@ export function createCli(): Command {
         testCommand,
         maxRetries: options.maxRetries ? parseInt(options.maxRetries, 10) : undefined,
       });
+    });
+
+  program
+    .command('history')
+    .description('View recorded agent sessions and file snapshot history')
+    .action(async (_options, cmd) => {
+      const runtime = getRuntime(cmd);
+      await historyCommand(runtime);
+    });
+
+  program
+    .command('rollback [sessionId]')
+    .description('Rollback files modified by AgentForge to previous snapshots')
+    .action(async (sessionId, _options, cmd) => {
+      const runtime = getRuntime(cmd);
+      await rollbackCommand(runtime, sessionId);
+    });
+
+  program
+    .command('mcp [action]')
+    .description('Model Context Protocol (MCP) server integration (action: serve)')
+    .action(async (action, _options, cmd) => {
+      const runtime = getRuntime(cmd);
+      if (action === 'serve' || !action) {
+        await mcpServeCommand(runtime);
+      } else {
+        // eslint-disable-next-line no-console
+        console.error(`Unknown MCP action: ${action}. Use 'agentforge mcp serve'.`);
+        process.exit(1);
+      }
     });
 
   program

@@ -151,6 +151,9 @@ importers:
       '@agentforge/llm':
         specifier: workspace:*
         version: link:../../packages/llm
+      '@agentforge/mcp':
+        specifier: workspace:*
+        version: link:../../packages/mcp
       '@agentforge/types':
         specifier: workspace:*
         version: link:../../packages/types
@@ -337,6 +340,34 @@ importers:
 
   packages/llm:
     dependencies:
+      '@agentforge/types':
+        specifier: workspace:*
+        version: link:../types
+      zod:
+        specifier: ^3.24.2
+        version: 3.25.76
+    devDependencies:
+      '@types/node':
+        specifier: ^22.13.9
+        version: 22.20.3
+      tsup:
+        specifier: ^8.4.0
+        version: 8.5.1(postcss@8.5.28)(supports-color@7.2.0)(tsx@4.23.13)(typescript@5.9.3)
+      typescript:
+        specifier: ^5.7.3
+        version: 5.9.3
+      vitest:
+        specifier: ^3.0.7
+        version: 3.2.7(@types/node@22.20.3)(supports-color@7.2.0)(tsx@4.23.13)
+
+  packages/mcp:
+    dependencies:
+      '@agentforge/core':
+        specifier: workspace:*
+        version: link:../core
+      '@agentforge/tools':
+        specifier: workspace:*
+        version: link:../tools
       '@agentforge/types':
         specifier: workspace:*
         version: link:../types

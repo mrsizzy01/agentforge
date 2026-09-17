@@ -26,8 +26,11 @@ import {
   GitDiffTool,
   GitLogTool,
   GitCommitTool,
+  GetFileOutlineTool,
+  FindSymbolsTool,
 } from '@agentforge/tools';
 import { Logger } from './logger.js';
+import { SessionManager } from './session.js';
 
 export interface RuntimeOptions {
   workspaceRoot?: string;
@@ -43,6 +46,7 @@ export class AgentForgeRuntime {
   public readonly pathValidator: PathValidator;
   public readonly permissionManager: PermissionManager;
   public readonly auditLogger: AuditLogger;
+  public readonly sessions: SessionManager;
   public readonly fs: WorkspaceFilesystem;
   public readonly terminal: ProcessExecutor;
   public readonly git: GitClient;
@@ -78,6 +82,7 @@ export class AgentForgeRuntime {
     );
     this.permissionManager = new PermissionManager(config.security.permissionLevel);
     this.auditLogger = new AuditLogger();
+    this.sessions = new SessionManager(this.workspaceRoot);
 
     this.fs = new WorkspaceFilesystem({
       workspaceRoot: this.workspaceRoot,
@@ -126,6 +131,10 @@ export class AgentForgeRuntime {
     this.registry.register(new GitDiffTool(this.git));
     this.registry.register(new GitLogTool(this.git));
     this.registry.register(new GitCommitTool(this.git));
+
+    // Intelligence tools
+    this.registry.register(new GetFileOutlineTool(this.fs));
+    this.registry.register(new FindSymbolsTool(this.fs));
   }
 
   public getProjectInstructions(): string | null {

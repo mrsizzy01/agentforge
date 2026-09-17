@@ -13,3 +13,5 @@ export * from './git/git-status.js';
 export * from './git/git-diff.js';
 export * from './git/git-log.js';
 export * from './git/git-commit.js';
+export * from './intelligence/outline.js';
+export * from './intelligence/symbols.js';

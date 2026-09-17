@@ -4,6 +4,7 @@ import {
   LLMCompletionResponse,
   ProviderConfig,
   ToolCall,
+  StreamChunk,
 } from '../types.js';
 
 export class OpenAICompatibleProvider implements LLMProvider {
@@ -166,6 +167,101 @@ export class OpenAICompatibleProvider implements LLMProvider {
           : undefined,
         model: data.model || this.defaultModel,
       };
+    } finally {
+      clearTimeout(timeoutId);
+    }
+  }
+
+  public async *stream(request: LLMCompletionRequest): AsyncIterable<StreamChunk> {
+    const url = `${this.baseUrl}/chat/completions`;
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+    };
+    if (this.apiKey) {
+      headers['Authorization'] = `Bearer ${this.apiKey}`;
+    }
+
+    const formattedMessages = request.messages.map((m) => {
+      const msg: Record<string, unknown> = {
+        role: m.role,
+        content: m.content || '',
+      };
+      if (m.name) msg.name = m.name;
+      if (m.toolCallId) msg.tool_call_id = m.toolCallId;
+      if (m.toolCalls && m.toolCalls.length > 0) {
+        msg.tool_calls = m.toolCalls.map((tc) => ({
+          id: tc.id,
+          type: 'function',
+          function: {
+            name: tc.name,
+            arguments: JSON.stringify(tc.arguments),
+          },
+        }));
+      }
+      return msg;
+    });
+
+    const body: Record<string, unknown> = {
+      model: this.defaultModel,
+      messages: formattedMessages,
+      temperature: request.temperature ?? 0.2,
+      stream: true,
+    };
+
+    if (request.maxTokens) {
+      body.max_tokens = request.maxTokens;
+    }
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), this.timeoutMs);
+    const signal = request.abortSignal || controller.signal;
+
+    try {
+      const response = await fetch(url, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(body),
+        signal,
+      });
+
+      if (!response.ok || !response.body) {
+        const errorText = await response.text();
+        throw new Error(`[${this.id}] Streaming API error (${response.status}): ${errorText}`);
+      }
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '';
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop() || '';
+
+        for (const line of lines) {
+          const trimmed = line.trim();
+          if (!trimmed || !trimmed.startsWith('data:')) continue;
+          const dataStr = trimmed.slice(5).trim();
+          if (dataStr === '[DONE]') return;
+
+          try {
+            const parsed = JSON.parse(dataStr);
+            const choice = parsed.choices?.[0];
+            if (choice) {
+              const delta = choice.delta;
+              yield {
+                deltaText: delta?.content || undefined,
+                finishReason: choice.finish_reason || undefined,
+              };
+            }
+          } catch {
+            // Ignore incomplete chunks
+          }
+        }
+      }
     } finally {
       clearTimeout(timeoutId);
     }

@@ -103,4 +103,45 @@ describe('ToolRegistry & ToolExecutor', () => {
     expect(res.error).toContain('cancelled by user');
     expect(fs.existsSync(path.join(tempDir, 'declined.txt'))).toBe(false);
   });
+
+  it('extracts outline and symbols from source code files', async () => {
+    const sampleCode = `
+import { Config } from './config.js';
+
+export interface UserSession {
+  id: string;
+  createdAt: number;
+}
+
+export class AuthService {
+  public async authenticate(token: string): Promise<boolean> {
+    return true;
+  }
+}
+
+export function validateInput(raw: string): boolean {
+  return raw.length > 0;
+}
+`;
+    await wfs.writeFile('auth.ts', sampleCode);
+
+    const { GetFileOutlineTool, FindSymbolsTool } = await import('../src/index.js');
+    const outlineTool = new GetFileOutlineTool(wfs);
+    const symbolsTool = new FindSymbolsTool(wfs);
+
+    const outlineRes = await outlineTool.execute({ path: 'auth.ts' }, context);
+    expect(outlineRes.success).toBe(true);
+    expect(outlineRes.data?.symbols.length).toBeGreaterThanOrEqual(3);
+
+    const kinds = outlineRes.data?.symbols.map((s) => s.kind);
+    expect(kinds).toContain('interface');
+    expect(kinds).toContain('class');
+    expect(kinds).toContain('function');
+
+    const searchRes = await symbolsTool.execute({ query: 'AuthService' }, context);
+    expect(searchRes.success).toBe(true);
+    expect(searchRes.data?.matches.length).toBe(1);
+    expect(searchRes.data?.matches[0].file).toBe('auth.ts');
+    expect(searchRes.data?.matches[0].symbol.signature).toContain('class AuthService');
+  });
 });

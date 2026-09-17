@@ -222,4 +222,66 @@ export class GitClient {
 
     return res.stdout.trim();
   }
+
+  public async createWorktree(
+    targetDir: string,
+    branchName?: string,
+  ): Promise<{ path: string; branch: string }> {
+    const isRepo = await this.isGitRepo();
+    if (!isRepo) {
+      throw new Error('Cannot create worktree: not a git repository.');
+    }
+
+    const branch = branchName || `agentforge/task-${Date.now()}`;
+    const cmd = `git worktree add -b "${branch}" "${targetDir}" HEAD`;
+
+    const res = await this.executor.execute(cmd, { cwd: this.workspaceRoot });
+    if (res.exitCode !== 0) {
+      throw new Error(`Failed to create git worktree: ${res.stderr || res.stdout}`);
+    }
+
+    return { path: targetDir, branch };
+  }
+
+  public async removeWorktree(targetDir: string, force: boolean = true): Promise<void> {
+    const forceFlag = force ? '--force' : '';
+    const cmd = `git worktree remove "${targetDir}" ${forceFlag}`.trim();
+
+    const res = await this.executor.execute(cmd, { cwd: this.workspaceRoot });
+    if (res.exitCode !== 0) {
+      throw new Error(`Failed to remove git worktree: ${res.stderr || res.stdout}`);
+    }
+  }
+
+  public async listWorktrees(): Promise<Array<{ path: string; head: string; branch?: string }>> {
+    const res = await this.executor.execute('git worktree list --porcelain', {
+      cwd: this.workspaceRoot,
+    });
+    if (res.exitCode !== 0) {
+      return [];
+    }
+
+    const blocks = res.stdout.split(/\r?\n\r?\n/).filter(Boolean);
+    const worktrees: Array<{ path: string; head: string; branch?: string }> = [];
+
+    for (const block of blocks) {
+      const lines = block.split(/\r?\n/);
+      let worktreePath = '';
+      let head = '';
+      let branch = '';
+
+      for (const l of lines) {
+        if (l.startsWith('worktree ')) worktreePath = l.slice(9).trim();
+        if (l.startsWith('HEAD ')) head = l.slice(5).trim();
+        if (l.startsWith('branch ')) branch = l.slice(7).replace('refs/heads/', '').trim();
+      }
+
+      if (worktreePath) {
+        worktrees.push({ path: worktreePath, head, branch: branch || undefined });
+      }
+    }
+
+    return worktrees;
+  }
 }
+

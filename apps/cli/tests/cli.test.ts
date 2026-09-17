@@ -36,6 +36,9 @@ describe('AgentForge CLI', () => {
     expect(commandNames).toContain('git');
     expect(commandNames).toContain('run');
     expect(commandNames).toContain('fix');
+    expect(commandNames).toContain('history');
+    expect(commandNames).toContain('rollback');
+    expect(commandNames).toContain('mcp');
     expect(commandNames).toContain('chat');
   });
 

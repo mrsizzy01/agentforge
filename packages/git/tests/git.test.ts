@@ -66,4 +66,22 @@ describe('GitClient', () => {
     expect(diff).toContain('-version 1');
     expect(diff).toContain('+version 2');
   });
+
+  it('creates, lists, and removes a shadow worktree', async () => {
+    fs.writeFileSync(path.join(tempDir, 'base.txt'), 'base');
+    await git.stage('.');
+    await git.commit({ message: 'feat: base' });
+
+    const worktreePath = path.join(tempDir, 'shadow-workspace');
+    const res = await git.createWorktree(worktreePath, 'agentforge-shadow-test');
+
+    expect(res.branch).toBe('agentforge-shadow-test');
+    expect(fs.existsSync(worktreePath)).toBe(true);
+
+    const worktrees = await git.listWorktrees();
+    expect(worktrees.length).toBeGreaterThanOrEqual(2);
+
+    await git.removeWorktree(worktreePath, true);
+    expect(fs.existsSync(worktreePath)).toBe(false);
+  });
 });
