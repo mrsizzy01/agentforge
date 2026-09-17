@@ -12,6 +12,7 @@ import { mcpServeCommand } from './commands/mcp.js';
 import { historyCommand } from './commands/history.js';
 import { rollbackCommand } from './commands/rollback.js';
 import { resumeCommand } from './commands/resume.js';
+import { watchCommand } from './commands/watch.js';
 
 export function createCli(): Command {
   const program = new Command();
@@ -151,6 +152,21 @@ export function createCli(): Command {
         console.error(`Unknown MCP action: ${action}. Use 'agentforge mcp serve'.`);
         process.exit(1);
       }
+    });
+
+  program
+    .command('watch')
+    .description('Watch source files and run agent tasks automatically on changes')
+    .option('--task <task>', 'Agent task to run on file change (default: run test suite)')
+    .option('--patterns <patterns>', 'Comma-separated file patterns to watch (default: src)', (v) => v.split(','))
+    .option('--debounce <ms>', 'Debounce delay in milliseconds (default: 500)', (v) => parseInt(v, 10))
+    .action(async (options, cmd) => {
+      const runtime = getRuntime(cmd);
+      await watchCommand(runtime, {
+        task: options.task,
+        patterns: options.patterns,
+        debounceMs: options.debounce,
+      });
     });
 
   program

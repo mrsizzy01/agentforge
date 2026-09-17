@@ -6,6 +6,7 @@ import {
   ToolCall,
   StreamChunk,
 } from '../types.js';
+import { withRetry } from '../retry.js';
 
 export class OpenAICompatibleProvider implements LLMProvider {
   public readonly id: string;
@@ -23,6 +24,10 @@ export class OpenAICompatibleProvider implements LLMProvider {
   }
 
   public async complete(request: LLMCompletionRequest): Promise<LLMCompletionResponse> {
+    return withRetry(() => this._complete(request));
+  }
+
+  private async _complete(request: LLMCompletionRequest): Promise<LLMCompletionResponse> {
     const url = `${this.baseUrl}/chat/completions`;
 
     const headers: Record<string, string> = {

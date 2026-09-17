@@ -23,12 +23,15 @@ import {
   SearchFilesTool,
   SearchCodeTool,
   RunCommandTool,
+  TestRunnerTool,
   GitStatusTool,
   GitDiffTool,
   GitLogTool,
   GitCommitTool,
+  DiffReviewTool,
   GetFileOutlineTool,
   FindSymbolsTool,
+  PlanTool,
   ReadUrlTool,
 } from '@agentforge/tools';
 import { Logger } from './logger.js';
@@ -134,10 +137,15 @@ export class AgentForgeRuntime {
     this.registry.register(new GitDiffTool(this.git));
     this.registry.register(new GitLogTool(this.git));
     this.registry.register(new GitCommitTool(this.git));
+    this.registry.register(new DiffReviewTool(this.git));
+
+    // Terminal extended
+    this.registry.register(new TestRunnerTool(this.terminal));
 
     // Intelligence tools
     this.registry.register(new GetFileOutlineTool(this.fs));
     this.registry.register(new FindSymbolsTool(this.fs));
+    this.registry.register(new PlanTool());
 
     // Web tools
     this.registry.register(new ReadUrlTool());

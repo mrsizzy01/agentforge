@@ -75,7 +75,7 @@ describe('@agentforge/mcp Server', () => {
     expect(sentResponses).toHaveLength(1);
     const tools = sentResponses[0].result?.tools as any[];
     expect(tools).toBeDefined();
-    expect(tools.length).toBe(16);
+    expect(tools.length).toBe(19);
 
     const toolNames = tools.map((t) => t.name);
     expect(toolNames).toContain('read_file');
@@ -84,6 +84,9 @@ describe('@agentforge/mcp Server', () => {
     expect(toolNames).toContain('get_file_outline');
     expect(toolNames).toContain('find_symbols');
     expect(toolNames).toContain('read_url');
+    expect(toolNames).toContain('diff_review');
+    expect(toolNames).toContain('run_tests');
+    expect(toolNames).toContain('create_plan');
   });
 
   it('executes a tool via tools/call and returns text content block', async () => {

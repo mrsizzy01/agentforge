@@ -5,6 +5,7 @@ import {
   ProviderConfig,
   ToolCall,
 } from '../types.js';
+import { withRetry } from '../retry.js';
 
 export class AnthropicProvider implements LLMProvider {
   public readonly id = 'anthropic';
@@ -21,6 +22,10 @@ export class AnthropicProvider implements LLMProvider {
   }
 
   public async complete(request: LLMCompletionRequest): Promise<LLMCompletionResponse> {
+    return withRetry(() => this._complete(request));
+  }
+
+  private async _complete(request: LLMCompletionRequest): Promise<LLMCompletionResponse> {
     if (!this.apiKey) {
       throw new Error(
         '[anthropic] API key is required. Set ANTHROPIC_API_KEY environment variable.',

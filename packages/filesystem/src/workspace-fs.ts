@@ -30,11 +30,39 @@ export class WorkspaceFilesystem {
   private workspaceRoot: string;
   private pathValidator: PathValidator;
   private maxFileSizeBytes: number;
+  private agentIgnorePatterns: string[];
 
   constructor(options: WorkspaceFilesystemOptions) {
     this.workspaceRoot = path.resolve(options.workspaceRoot);
     this.pathValidator = new PathValidator(this.workspaceRoot, options.allowedDirectories || []);
     this.maxFileSizeBytes = options.maxFileSizeBytes || 5 * 1024 * 1024; // 5MB default
+    this.agentIgnorePatterns = this.loadAgentIgnore();
+  }
+
+  /**
+   * Loads .agentforgeignore from the workspace root (gitignore-compatible syntax).
+   * Lines starting with # are treated as comments.
+   */
+  private loadAgentIgnore(): string[] {
+    const ignorePath = path.join(this.workspaceRoot, '.agentforgeignore');
+    if (!fs.existsSync(ignorePath)) return [];
+    try {
+      const raw = fs.readFileSync(ignorePath, 'utf-8');
+      return raw
+        .split(/\r?\n/)
+        .map((l) => l.trim())
+        .filter((l) => l.length > 0 && !l.startsWith('#'))
+        .map((l) => (l.includes('/') || l.includes('*') ? l : `**/${l}/**`));
+    } catch {
+      return [];
+    }
+  }
+
+  /**
+   * Reload ignore patterns (e.g. if .agentforgeignore was created after startup).
+   */
+  public reloadIgnorePatterns(): void {
+    this.agentIgnorePatterns = this.loadAgentIgnore();
   }
 
   public getWorkspaceRoot(): string {
@@ -173,7 +201,11 @@ export class WorkspaceFilesystem {
     }
 
     const results: FileInfo[] = [];
-    const ignoreList = [...DEFAULT_IGNORE_PATTERNS, ...(options.ignorePatterns || [])];
+    const ignoreList = [
+      ...DEFAULT_IGNORE_PATTERNS,
+      ...this.agentIgnorePatterns,
+      ...(options.ignorePatterns || []),
+    ];
     const isIgnored = picomatch(ignoreList, { dot: true });
 
     const walk = async (currentDir: string, depth: number) => {
