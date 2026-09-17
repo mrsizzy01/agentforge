@@ -181,6 +181,7 @@ export async function runCommand(
       confirmAction,
     });
 
+    runtime.sessions.saveSessionMessages(session.id, agent.getContext().getMessages());
     runtime.sessions.completeSession(session.id, result.success ? 'completed' : 'failed');
 
     if (result.success) {

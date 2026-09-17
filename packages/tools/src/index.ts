@@ -16,3 +16,4 @@ export * from './git/git-log.js';
 export * from './git/git-commit.js';
 export * from './intelligence/outline.js';
 export * from './intelligence/symbols.js';
+export * from './web/read-url.js';

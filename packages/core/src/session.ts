@@ -175,6 +175,36 @@ export class SessionManager {
     };
   }
 
+  public saveSessionMessages(sessionId: string, messages: unknown[]): void {
+    const sessionDir = path.join(this.sessionsDir, sessionId);
+    this.ensureDir(sessionDir);
+    const messagesFile = path.join(sessionDir, 'messages.json');
+    fs.writeFileSync(messagesFile, JSON.stringify(messages, null, 2), 'utf-8');
+
+    const session = this.getSession(sessionId);
+    if (session) {
+      this.saveSession(session);
+    }
+  }
+
+  public loadSessionMessages(sessionId: string): unknown[] | null {
+    const messagesFile = path.join(this.sessionsDir, sessionId, 'messages.json');
+    if (!fs.existsSync(messagesFile)) {
+      return null;
+    }
+    try {
+      const content = fs.readFileSync(messagesFile, 'utf-8');
+      return JSON.parse(content) as unknown[];
+    } catch {
+      return null;
+    }
+  }
+
+  public getLatestSession(): SessionRecord | null {
+    const sessions = this.listSessions();
+    return sessions[0] || null;
+  }
+
   private saveSession(session: SessionRecord): void {
     const sessionFilePath = path.join(this.sessionsDir, session.id, 'session.json');
     fs.writeFileSync(sessionFilePath, JSON.stringify(session, null, 2), 'utf-8');

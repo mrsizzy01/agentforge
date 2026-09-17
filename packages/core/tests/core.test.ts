@@ -23,7 +23,7 @@ describe('AgentForgeRuntime', () => {
     const runtime = new AgentForgeRuntime({ workspaceRoot: tempDir });
     const tools = runtime.registry.getAll();
 
-    expect(tools.length).toBe(15);
+    expect(tools.length).toBe(16);
     expect(runtime.registry.has('read_file')).toBe(true);
     expect(runtime.registry.has('write_file')).toBe(true);
     expect(runtime.registry.has('edit_file')).toBe(true);
@@ -39,6 +39,7 @@ describe('AgentForgeRuntime', () => {
     expect(runtime.registry.has('git_diff')).toBe(true);
     expect(runtime.registry.has('git_log')).toBe(true);
     expect(runtime.registry.has('git_commit')).toBe(true);
+    expect(runtime.registry.has('read_url')).toBe(true);
   });
 
   it('initializes workspace with config.json and AGENTFORGE.md', () => {
@@ -94,6 +95,20 @@ describe('SessionManager', () => {
 
     const updatedSession = sm.getSession(session.id);
     expect(updatedSession?.status).toBe('rolled_back');
+
+    // Test session message persistence
+    const testMessages = [
+      { role: 'user', content: 'Initial objective' },
+      { role: 'assistant', content: 'Planning step' },
+    ];
+    sm.saveSessionMessages(session.id, testMessages);
+
+    const loadedMessages = sm.loadSessionMessages(session.id);
+    expect(loadedMessages).toHaveLength(2);
+    expect((loadedMessages as any)[0].content).toBe('Initial objective');
+
+    const latest = sm.getLatestSession();
+    expect(latest?.id).toBe(session.id);
 
     fs.rmSync(tempDir, { recursive: true, force: true });
   });

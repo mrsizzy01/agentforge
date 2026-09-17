@@ -67,7 +67,10 @@ export class FindSymbolsTool extends BaseTool<Input, { matches: SymbolSearchResu
       const outline = await this.outlineTool.execute({ path: normalizedPath }, context);
       if (outline.success && outline.data) {
         for (const sym of outline.data.symbols) {
-          if (sym.signature.toLowerCase().includes(queryLower)) {
+          if (
+            (sym.name && sym.name.toLowerCase().includes(queryLower)) ||
+            sym.signature.toLowerCase().includes(queryLower)
+          ) {
             matches.push({
               file: normalizedPath,
               symbol: sym,

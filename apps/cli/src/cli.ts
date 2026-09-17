@@ -11,6 +11,7 @@ import { fixCommand } from './commands/fix.js';
 import { mcpServeCommand } from './commands/mcp.js';
 import { historyCommand } from './commands/history.js';
 import { rollbackCommand } from './commands/rollback.js';
+import { resumeCommand } from './commands/resume.js';
 
 export function createCli(): Command {
   const program = new Command();
@@ -123,6 +124,19 @@ export function createCli(): Command {
     .action(async (sessionId, _options, cmd) => {
       const runtime = getRuntime(cmd);
       await rollbackCommand(runtime, sessionId);
+    });
+
+  program
+    .command('resume [sessionId]')
+    .description('Resume a previous AgentForge session and continue execution')
+    .option('--model <model>', 'Override model name for resumed session')
+    .option('--max-steps <number>', 'Max reasoning steps', (val) => parseInt(val, 10))
+    .action(async (sessionId, options, cmd) => {
+      const runtime = getRuntime(cmd);
+      await resumeCommand(runtime, sessionId, {
+        model: options.model,
+        maxSteps: options.maxSteps,
+      });
     });
 
   program

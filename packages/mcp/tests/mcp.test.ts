@@ -75,7 +75,7 @@ describe('@agentforge/mcp Server', () => {
     expect(sentResponses).toHaveLength(1);
     const tools = sentResponses[0].result?.tools as any[];
     expect(tools).toBeDefined();
-    expect(tools.length).toBe(15);
+    expect(tools.length).toBe(16);
 
     const toolNames = tools.map((t) => t.name);
     expect(toolNames).toContain('read_file');
@@ -83,6 +83,7 @@ describe('@agentforge/mcp Server', () => {
     expect(toolNames).toContain('apply_patch');
     expect(toolNames).toContain('get_file_outline');
     expect(toolNames).toContain('find_symbols');
+    expect(toolNames).toContain('read_url');
   });
 
   it('executes a tool via tools/call and returns text content block', async () => {

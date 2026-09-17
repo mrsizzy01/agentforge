@@ -29,6 +29,7 @@ import {
   GitCommitTool,
   GetFileOutlineTool,
   FindSymbolsTool,
+  ReadUrlTool,
 } from '@agentforge/tools';
 import { Logger } from './logger.js';
 import { SessionManager } from './session.js';
@@ -137,6 +138,9 @@ export class AgentForgeRuntime {
     // Intelligence tools
     this.registry.register(new GetFileOutlineTool(this.fs));
     this.registry.register(new FindSymbolsTool(this.fs));
+
+    // Web tools
+    this.registry.register(new ReadUrlTool());
   }
 
   public getProjectInstructions(): string | null {

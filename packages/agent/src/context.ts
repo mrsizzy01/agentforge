@@ -58,6 +58,10 @@ export class ContextManager {
     return [...this.messages];
   }
 
+  public setMessages(messages: ChatMessage[]): void {
+    this.messages = [...messages];
+  }
+
   public clearNonSystem(): void {
     const system = this.messages.filter((m) => m.role === 'system');
     this.messages = [...system];
