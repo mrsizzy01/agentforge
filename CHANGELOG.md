@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.1.0] - Phase 1: Foundation
 
 ### Added
+
 - Modular monorepo architecture using pnpm workspaces and TypeScript project references.
 - `@agentforge/types`: Core data structures, tool schemas, and security interfaces.
 - `@agentforge/security`: Path traversal blocker, secret detector & redaction engine, command safety analyzer, permission manager, and security audit logger.

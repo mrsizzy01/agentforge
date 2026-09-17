@@ -22,7 +22,10 @@ describe('WorkspaceFilesystem', () => {
   });
 
   it('writes and reads files within workspace', async () => {
-    await wfs.writeFile('src/hello.ts', 'export const message = "hello";\nexport const count = 42;');
+    await wfs.writeFile(
+      'src/hello.ts',
+      'export const message = "hello";\nexport const count = 42;',
+    );
     const content = await wfs.readFile('src/hello.ts');
     expect(content).toContain('message = "hello"');
 

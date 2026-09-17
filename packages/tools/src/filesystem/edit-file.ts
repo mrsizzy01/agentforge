@@ -15,7 +15,10 @@ const EditFileInputSchema = z.object({
 
 type EditFileInput = z.infer<typeof EditFileInputSchema>;
 
-export class EditFileTool extends BaseTool<EditFileInput, { modified: boolean; chunksApplied: number }> {
+export class EditFileTool extends BaseTool<
+  EditFileInput,
+  { modified: boolean; chunksApplied: number }
+> {
   readonly name = 'edit_file';
   readonly description = 'Performs targeted exact-match replacements on a file in the workspace.';
   readonly category = 'write' as const;
@@ -29,7 +32,10 @@ export class EditFileTool extends BaseTool<EditFileInput, { modified: boolean; c
     this.fs = fsInstance;
   }
 
-  async run(input: EditFileInput, _context: ToolContext): Promise<{ modified: boolean; chunksApplied: number }> {
+  async run(
+    input: EditFileInput,
+    _context: ToolContext,
+  ): Promise<{ modified: boolean; chunksApplied: number }> {
     const res = await this.fs.editFile(input.path, input.edits);
     return {
       modified: res.modified,

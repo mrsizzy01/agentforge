@@ -69,9 +69,7 @@ export class SecretDetector {
         const fullMatch = match[0];
         const secretVal = match[1] || fullMatch;
         const preview =
-          secretVal.length > 8
-            ? `${secretVal.slice(0, 4)}...${secretVal.slice(-4)}`
-            : '[REDACTED]';
+          secretVal.length > 8 ? `${secretVal.slice(0, 4)}...${secretVal.slice(-4)}` : '[REDACTED]';
 
         matches.push({
           type: pattern.type,

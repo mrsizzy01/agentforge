@@ -14,7 +14,8 @@ type SearchCodeInput = z.infer<typeof SearchCodeInputSchema>;
 
 export class SearchCodeTool extends BaseTool<SearchCodeInput, SearchMatch[]> {
   readonly name = 'search_code';
-  readonly description = 'Searches text and code patterns across all files in workspace with line numbers.';
+  readonly description =
+    'Searches text and code patterns across all files in workspace with line numbers.';
   readonly category = 'read' as const;
   readonly inputSchema = SearchCodeInputSchema;
 

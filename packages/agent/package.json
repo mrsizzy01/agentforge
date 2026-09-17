@@ -1,0 +1,39 @@
+{
+  "name": "@agentforge/agent",
+  "version": "0.1.0",
+  "description": "Autonomous ReAct agent reasoning and execution engine for AgentForge",
+  "author": "AgentForge Contributors",
+  "license": "Apache-2.0",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "scripts": {
+    "build": "tsup src/index.ts --format esm,cjs --dts",
+    "dev": "tsup src/index.ts --format esm,cjs --watch",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@agentforge/config": "workspace:*",
+    "@agentforge/core": "workspace:*",
+    "@agentforge/filesystem": "workspace:*",
+    "@agentforge/git": "workspace:*",
+    "@agentforge/llm": "workspace:*",
+    "@agentforge/security": "workspace:*",
+    "@agentforge/terminal": "workspace:*",
+    "@agentforge/tools": "workspace:*",
+    "@agentforge/types": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^22.13.9",
+    "tsup": "^8.4.0",
+    "typescript": "^5.7.3",
+    "vitest": "^3.0.7"
+  }
+}

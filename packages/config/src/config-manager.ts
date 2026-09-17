@@ -6,10 +6,7 @@ import {
   PermissionLevel,
   ProviderType,
 } from '@agentforge/types';
-import {
-  getGlobalConfigFile,
-  getWorkspaceConfigFile,
-} from './paths.js';
+import { getGlobalConfigFile, getWorkspaceConfigFile } from './paths.js';
 
 export class ConfigManager {
   private config: AgentForgeConfig;
@@ -65,9 +62,7 @@ export class ConfigManager {
 
   public save(scope: 'workspace' | 'global' = 'workspace'): void {
     const targetFile =
-      scope === 'workspace'
-        ? getWorkspaceConfigFile(this.workspaceRoot)
-        : getGlobalConfigFile();
+      scope === 'workspace' ? getWorkspaceConfigFile(this.workspaceRoot) : getGlobalConfigFile();
 
     const targetDir = path.dirname(targetFile);
     if (!fs.existsSync(targetDir)) {
@@ -108,8 +103,8 @@ export class ConfigManager {
     }
     if (process.env.AGENTFORGE_PERMISSION_LEVEL) {
       if (!merged.security || typeof merged.security !== 'object') merged.security = {};
-      (merged.security as Record<string, unknown>).permissionLevel =
-        process.env.AGENTFORGE_PERMISSION_LEVEL as PermissionLevel;
+      (merged.security as Record<string, unknown>).permissionLevel = process.env
+        .AGENTFORGE_PERMISSION_LEVEL as PermissionLevel;
     }
     if (process.env.OPENAI_API_KEY) {
       if (!merged.provider || typeof merged.provider !== 'object') merged.provider = {};
@@ -117,7 +112,8 @@ export class ConfigManager {
     }
     if (process.env.AGENTFORGE_PROVIDER) {
       if (!merged.provider || typeof merged.provider !== 'object') merged.provider = {};
-      (merged.provider as Record<string, unknown>).type = process.env.AGENTFORGE_PROVIDER as ProviderType;
+      (merged.provider as Record<string, unknown>).type = process.env
+        .AGENTFORGE_PROVIDER as ProviderType;
     }
     if (process.env.AGENTFORGE_MODEL) {
       if (!merged.provider || typeof merged.provider !== 'object') merged.provider = {};

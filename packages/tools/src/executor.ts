@@ -1,7 +1,4 @@
-import {
-  ToolResult,
-  ToolContext,
-} from '@agentforge/types';
+import { ToolResult, ToolContext } from '@agentforge/types';
 import { PermissionManager, AuditLogger, SecretDetector } from '@agentforge/security';
 import { ToolRegistry } from './registry.js';
 

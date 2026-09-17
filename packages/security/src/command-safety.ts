@@ -83,9 +83,7 @@ export class CommandSafetyValidator {
   private customBlockedPatterns: RegExp[] = [];
 
   constructor(customBlockedPatterns: string[] = []) {
-    this.customBlockedPatterns = customBlockedPatterns.map(
-      (p) => new RegExp(p, 'i'),
-    );
+    this.customBlockedPatterns = customBlockedPatterns.map((p) => new RegExp(p, 'i'));
   }
 
   public analyze(command: string): CommandSafetyAnalysis {

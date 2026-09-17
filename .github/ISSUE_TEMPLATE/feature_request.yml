@@ -1,7 +1,7 @@
 name: Feature Request
 description: Suggest an idea or new feature for AgentForge
-title: "[Feature]: "
-labels: ["enhancement"]
+title: '[Feature]: '
+labels: ['enhancement']
 body:
   - type: markdown
     attributes:

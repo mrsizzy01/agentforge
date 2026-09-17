@@ -23,7 +23,10 @@ export class DeleteFileTool extends BaseTool<DeleteFileInput, { deleted: boolean
     this.fs = fsInstance;
   }
 
-  async run(input: DeleteFileInput, _context: ToolContext): Promise<{ deleted: boolean; path: string }> {
+  async run(
+    input: DeleteFileInput,
+    _context: ToolContext,
+  ): Promise<{ deleted: boolean; path: string }> {
     await this.fs.deleteFile(input.path);
     return {
       deleted: true,

@@ -35,6 +35,7 @@ export interface RuntimeOptions {
 }
 
 export class AgentForgeRuntime {
+  public readonly isInteractive: boolean;
   public readonly workspaceRoot: string;
   public readonly configManager: ConfigManager;
   public readonly secretDetector: SecretDetector;
@@ -49,7 +50,20 @@ export class AgentForgeRuntime {
   public readonly executor: ToolExecutor;
   public readonly logger: Logger;
 
+  public get tools(): ToolRegistry {
+    return this.registry;
+  }
+
+  public get permissions(): PermissionManager {
+    return this.permissionManager;
+  }
+
+  public get audit(): AuditLogger {
+    return this.auditLogger;
+  }
+
   constructor(options: RuntimeOptions = {}) {
+    this.isInteractive = options.isInteractive ?? true;
     this.workspaceRoot = path.resolve(options.workspaceRoot || process.cwd());
     this.configManager = new ConfigManager(this.workspaceRoot);
     const config = this.configManager.getConfig();

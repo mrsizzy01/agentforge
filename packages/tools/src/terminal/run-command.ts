@@ -14,7 +14,8 @@ type RunCommandInput = z.infer<typeof RunCommandInputSchema>;
 
 export class RunCommandTool extends BaseTool<RunCommandInput, CommandResult> {
   readonly name = 'run_command';
-  readonly description = 'Executes a shell command safely inside the workspace with timeout and security checks.';
+  readonly description =
+    'Executes a shell command safely inside the workspace with timeout and security checks.';
   readonly category = 'execute' as const;
   readonly inputSchema = RunCommandInputSchema;
   override readonly requiresConfirmation = true;

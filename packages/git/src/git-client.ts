@@ -19,8 +19,7 @@ export class GitClient {
   constructor(options: GitClientOptions) {
     this.workspaceRoot = options.workspaceRoot;
     this.executor =
-      options.processExecutor ||
-      new ProcessExecutor({ workspaceRoot: this.workspaceRoot });
+      options.processExecutor || new ProcessExecutor({ workspaceRoot: this.workspaceRoot });
   }
 
   public async isGitRepo(): Promise<boolean> {

@@ -10,7 +10,10 @@ const WriteFileInputSchema = z.object({
 
 type WriteFileInput = z.infer<typeof WriteFileInputSchema>;
 
-export class WriteFileTool extends BaseTool<WriteFileInput, { path: string; bytesWritten: number }> {
+export class WriteFileTool extends BaseTool<
+  WriteFileInput,
+  { path: string; bytesWritten: number }
+> {
   readonly name = 'write_file';
   readonly description = 'Writes or overwrites a file with full content inside the workspace.';
   readonly category = 'write' as const;
@@ -24,7 +27,10 @@ export class WriteFileTool extends BaseTool<WriteFileInput, { path: string; byte
     this.fs = fsInstance;
   }
 
-  async run(input: WriteFileInput, _context: ToolContext): Promise<{ path: string; bytesWritten: number }> {
+  async run(
+    input: WriteFileInput,
+    _context: ToolContext,
+  ): Promise<{ path: string; bytesWritten: number }> {
     await this.fs.writeFile(input.path, input.content);
     return {
       path: input.path,

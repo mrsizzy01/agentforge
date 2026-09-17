@@ -6,6 +6,8 @@ import { configCommand } from './commands/config.js';
 import { toolsCommand } from './commands/tools.js';
 import { gitCommand } from './commands/git.js';
 import { runCommand } from './commands/run.js';
+import { chatCommand } from './commands/chat.js';
+import { fixCommand } from './commands/fix.js';
 
 export function createCli(): Command {
   const program = new Command();
@@ -36,7 +38,9 @@ export function createCli(): Command {
 
   program
     .command('init')
-    .description('Initialize AgentForge configuration (.agentforge/) and AGENTFORGE.md in current project')
+    .description(
+      'Initialize AgentForge configuration (.agentforge/) and AGENTFORGE.md in current project',
+    )
     .action(async (_options, cmd) => {
       const runtime = getRuntime(cmd);
       await initCommand(runtime);
@@ -53,7 +57,9 @@ export function createCli(): Command {
 
   program
     .command('tools [action] [toolName]')
-    .description('List available agent tools or inspect their JSON schemas (actions: list, inspect)')
+    .description(
+      'List available agent tools or inspect their JSON schemas (actions: list, inspect)',
+    )
     .action(async (action, toolName, _options, cmd) => {
       const runtime = getRuntime(cmd);
       await toolsCommand(runtime, action || 'list', toolName);
@@ -73,26 +79,37 @@ export function createCli(): Command {
 
   program
     .command('run <task>')
-    .description('Run an agent task on the repository')
-    .action(async (task, _options, cmd) => {
+    .description('Run an autonomous agent task on the repository')
+    .option('--max-steps <n>', 'Maximum reasoning steps', '25')
+    .option('--model <model>', 'Override model identifier')
+    .option('--temperature <temp>', 'Sampling temperature')
+    .action(async (task, options, cmd) => {
       const runtime = getRuntime(cmd);
-      await runCommand(runtime, task);
+      await runCommand(runtime, task, {
+        maxSteps: options.maxSteps ? parseInt(options.maxSteps, 10) : undefined,
+        model: options.model,
+        temperature: options.temperature ? parseFloat(options.temperature) : undefined,
+      });
     });
 
   program
-    .command('analyze')
-    .description('Analyze the repository structure and dependencies')
-    .action(async (_options, cmd) => {
+    .command('fix [testCommand]')
+    .description('Run project test suite and autonomously repair failing code')
+    .option('--max-retries <n>', 'Maximum repair attempts', '3')
+    .action(async (testCommand, options, cmd) => {
       const runtime = getRuntime(cmd);
-      await runCommand(runtime, 'Analyze repository architecture');
+      await fixCommand(runtime, {
+        testCommand,
+        maxRetries: options.maxRetries ? parseInt(options.maxRetries, 10) : undefined,
+      });
     });
 
   program
     .command('chat')
-    .description('Interactive conversation with AgentForge')
+    .description('Interactive conversation session with AgentForge')
     .action(async (_options, cmd) => {
       const runtime = getRuntime(cmd);
-      await runCommand(runtime, 'Interactive session');
+      await chatCommand(runtime);
     });
 
   return program;

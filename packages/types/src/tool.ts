@@ -24,7 +24,10 @@ export interface ToolDefinition<TInput = unknown, TOutput = unknown> {
   readonly inputSchema: z.ZodType<TInput, z.ZodTypeDef, any>;
   readonly requiresConfirmation?: boolean;
   execute(input: TInput, context: ToolContext): Promise<ToolResult<TOutput>>;
-  validateSecurity?(input: TInput, context: ToolContext): Promise<{
+  validateSecurity?(
+    input: TInput,
+    context: ToolContext,
+  ): Promise<{
     verdict: SecurityVerdict;
     reason?: string;
   }>;

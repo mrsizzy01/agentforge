@@ -16,15 +16,14 @@ export const SecurityConfigSchema = z.object({
   permissionLevel: PermissionLevelSchema.default('interactive'),
   allowedDirectories: z.array(z.string()).default([]),
   blockedCommands: z.array(z.string()).default([]),
-  sensitiveFilePatterns: z.array(z.string()).default([
-    '**/.env*',
-    '**/id_rsa*',
-    '**/*.pem',
-    '**/*.key',
-    '**/credentials*',
-    '**/secrets*',
-  ]),
-  maxFileSizeBytes: z.number().int().positive().default(5 * 1024 * 1024), // 5MB
+  sensitiveFilePatterns: z
+    .array(z.string())
+    .default(['**/.env*', '**/id_rsa*', '**/*.pem', '**/*.key', '**/credentials*', '**/secrets*']),
+  maxFileSizeBytes: z
+    .number()
+    .int()
+    .positive()
+    .default(5 * 1024 * 1024), // 5MB
   commandTimeoutMs: z.number().int().positive().default(60000), // 60s
 });
 export type SecurityConfig = z.infer<typeof SecurityConfigSchema>;

@@ -5,6 +5,7 @@ AgentForge uses a hierarchical configuration system.
 ## Configuration Precedence
 
 Settings are merged in the following order of precedence (highest priority first):
+
 1. Command-line flags (e.g. `--non-interactive`, `--cwd`)
 2. Local workspace configuration: `<project>/.agentforge/config.json`
 3. Global user configuration: `~/.agentforge/config.json`
@@ -22,12 +23,7 @@ Settings are merged in the following order of precedence (highest priority first
     "permissionLevel": "interactive",
     "allowedDirectories": [],
     "blockedCommands": [],
-    "sensitiveFilePatterns": [
-      "**/.env*",
-      "**/id_rsa*",
-      "**/*.pem",
-      "**/*.key"
-    ],
+    "sensitiveFilePatterns": ["**/.env*", "**/id_rsa*", "**/*.pem", "**/*.key"],
     "maxFileSizeBytes": 5242880,
     "commandTimeoutMs": 60000
   },

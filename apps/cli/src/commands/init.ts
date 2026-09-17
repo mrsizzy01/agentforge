@@ -27,9 +27,15 @@ export async function initCommand(runtime: AgentForgeRuntime): Promise<void> {
     const status = await runtime.git.status();
     printSuccess(`Git repository ready on branch ${pc.bold(status.branch)}`);
   } else {
-    printInfo(`Git is not initialized. Consider running ${pc.bold('git init')} to enable full version control.`);
+    printInfo(
+      `Git is not initialized. Consider running ${pc.bold('git init')} to enable full version control.`,
+    );
   }
 
   // eslint-disable-next-line no-console
-  console.log(pc.cyan('\nWorkspace initialized successfully! Run `agentforge doctor` to verify system health.'));
+  console.log(
+    pc.cyan(
+      '\nWorkspace initialized successfully! Run `agentforge doctor` to verify system health.',
+    ),
+  );
 }

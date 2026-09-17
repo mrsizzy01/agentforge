@@ -22,6 +22,7 @@ Thank you for your interest in contributing to **AgentForge**! We are committed 
 ## Commit Guidelines
 
 We use **Conventional Commits**:
+
 - `feat:` for new features or capabilities
 - `fix:` for bug fixes
 - `docs:` for documentation additions or improvements

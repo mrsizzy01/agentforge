@@ -36,5 +36,6 @@ agentforge init
 ```
 
 This creates:
+
 - `.agentforge/config.json`: Local workspace settings.
 - `AGENTFORGE.md`: Project-level instructions, conventions, and architectural notes that AgentForge automatically reads before taking action.

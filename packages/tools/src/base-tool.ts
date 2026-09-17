@@ -7,9 +7,10 @@ import {
   SecurityVerdict,
 } from '@agentforge/types';
 
-export abstract class BaseTool<TInput = unknown, TOutput = unknown>
-  implements ToolDefinition<TInput, TOutput>
-{
+export abstract class BaseTool<TInput = unknown, TOutput = unknown> implements ToolDefinition<
+  TInput,
+  TOutput
+> {
   abstract readonly name: string;
   abstract readonly description: string;
   abstract readonly category: ToolPermissionCategory;

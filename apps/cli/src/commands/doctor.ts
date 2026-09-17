@@ -46,9 +46,13 @@ export async function doctorCommand(runtime: AgentForgeRuntime): Promise<number>
   if (provider.apiKey) {
     printSuccess(`AI Provider configured: ${pc.bold(provider.type)} (${pc.bold(provider.model)})`);
   } else if (provider.type === 'ollama' || provider.type === 'lmstudio') {
-    printSuccess(`Local AI Provider configured: ${pc.bold(provider.type)} (${pc.bold(provider.model)})`);
+    printSuccess(
+      `Local AI Provider configured: ${pc.bold(provider.type)} (${pc.bold(provider.model)})`,
+    );
   } else {
-    printWarn(`AI Provider API key not set (set OPENAI_API_KEY or use \`agentforge config set provider.type ollama\`)`);
+    printWarn(
+      `AI Provider API key not set (set OPENAI_API_KEY or use \`agentforge config set provider.type ollama\`)`,
+    );
   }
 
   // 6. Tools registry
@@ -64,6 +68,11 @@ export async function doctorCommand(runtime: AgentForgeRuntime): Promise<number>
   }
 
   // eslint-disable-next-line no-console
-  console.log('\n' + (hasIssues ? pc.red('[FAIL] Diagnostics completed with issues.') : pc.green('[OK] All core foundation checks passed.')));
+  console.log(
+    '\n' +
+      (hasIssues
+        ? pc.red('[FAIL] Diagnostics completed with issues.')
+        : pc.green('[OK] All core foundation checks passed.')),
+  );
   return hasIssues ? 1 : 0;
 }

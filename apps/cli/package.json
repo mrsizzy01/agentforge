@@ -16,7 +16,9 @@
     "clean": "rimraf dist"
   },
   "dependencies": {
+    "@agentforge/agent": "workspace:*",
     "@agentforge/core": "workspace:*",
+    "@agentforge/llm": "workspace:*",
     "@agentforge/types": "workspace:*",
     "commander": "^13.1.0",
     "picocolors": "^1.1.1",

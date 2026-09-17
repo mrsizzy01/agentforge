@@ -74,7 +74,8 @@ export class PathValidator {
     }
 
     const relative = path.relative(this.workspaceRoot, resolved).replace(/\\/g, '/');
-    const isSensitive = this.sensitiveMatcher(relative) || this.sensitiveMatcher(path.basename(resolved));
+    const isSensitive =
+      this.sensitiveMatcher(relative) || this.sensitiveMatcher(path.basename(resolved));
 
     return {
       isValid: true,

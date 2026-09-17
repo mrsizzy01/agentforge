@@ -8,7 +8,8 @@ type GitStatusInput = z.infer<typeof GitStatusInputSchema>;
 
 export class GitStatusTool extends BaseTool<GitStatusInput, GitStatus> {
   readonly name = 'git_status';
-  readonly description = 'Checks Git repository status (branch, modified, staged, untracked files).';
+  readonly description =
+    'Checks Git repository status (branch, modified, staged, untracked files).';
   readonly category = 'git' as const;
   readonly inputSchema = GitStatusInputSchema;
 

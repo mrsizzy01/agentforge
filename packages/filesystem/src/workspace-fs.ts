@@ -33,10 +33,7 @@ export class WorkspaceFilesystem {
 
   constructor(options: WorkspaceFilesystemOptions) {
     this.workspaceRoot = path.resolve(options.workspaceRoot);
-    this.pathValidator = new PathValidator(
-      this.workspaceRoot,
-      options.allowedDirectories || [],
-    );
+    this.pathValidator = new PathValidator(this.workspaceRoot, options.allowedDirectories || []);
     this.maxFileSizeBytes = options.maxFileSizeBytes || 5 * 1024 * 1024; // 5MB default
   }
 
@@ -108,7 +105,10 @@ export class WorkspaceFilesystem {
     await fs.promises.rename(tempFile, resolved);
   }
 
-  public async editFile(targetPath: string, edits: FileEditChunk[]): Promise<{ modified: boolean }> {
+  public async editFile(
+    targetPath: string,
+    edits: FileEditChunk[],
+  ): Promise<{ modified: boolean }> {
     const current = await this.readFile(targetPath);
     let updated = current;
 
@@ -120,9 +120,7 @@ export class WorkspaceFilesystem {
 
       const occurrences = updated.split(oldContent).length - 1;
       if (occurrences === 0) {
-        throw new Error(
-          `Edit failed for chunk #${i + 1}: target text not found in file.`,
-        );
+        throw new Error(`Edit failed for chunk #${i + 1}: target text not found in file.`);
       }
       if (occurrences > 1) {
         throw new Error(

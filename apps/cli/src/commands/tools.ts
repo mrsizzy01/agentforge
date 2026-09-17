@@ -42,9 +42,15 @@ export async function toolsCommand(
     const categoryTag = pc.cyan(`[${tool.category.toUpperCase()}]`);
 
     // eslint-disable-next-line no-console
-    console.log(`  ${pc.bold(tool.name.padEnd(18))} ${categoryTag.padEnd(12)} ${confirmTag.padEnd(26)} ${pc.dim(tool.description)}`);
+    console.log(
+      `  ${pc.bold(tool.name.padEnd(18))} ${categoryTag.padEnd(12)} ${confirmTag.padEnd(26)} ${pc.dim(tool.description)}`,
+    );
   }
 
   // eslint-disable-next-line no-console
-  console.log(pc.dim(`\nTotal: ${descriptors.length} tools available. Run \`agentforge tools inspect <name>\` for schema details.`));
+  console.log(
+    pc.dim(
+      `\nTotal: ${descriptors.length} tools available. Run \`agentforge tools inspect <name>\` for schema details.`,
+    ),
+  );
 }

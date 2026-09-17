@@ -108,7 +108,9 @@ describe('PermissionManager', () => {
   it('enforces safe mode requiring confirmation for non-read operations', () => {
     const pm = new PermissionManager('safe');
     expect(pm.evaluate({ category: 'read', toolName: 'read_file' }).verdict).toBe('allow');
-    expect(pm.evaluate({ category: 'write', toolName: 'write_file' }).verdict).toBe('require_confirmation');
+    expect(pm.evaluate({ category: 'write', toolName: 'write_file' }).verdict).toBe(
+      'require_confirmation',
+    );
   });
 
   it('blocks dangerous operations regardless of permission level', () => {

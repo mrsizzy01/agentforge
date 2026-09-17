@@ -1,7 +1,7 @@
 # AgentForge
 
 > **Open-source AI agents for real software development.**  
-> *Understand. Build. Test. Ship.*
+> _Understand. Build. Test. Ship._
 
 [![CI](https://github.com/agentforge/agentforge/actions/workflows/ci.yml/badge.svg)](https://github.com/agentforge/agentforge/actions/workflows/ci.yml)
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
@@ -23,6 +23,8 @@ AgentForge Monorepo
 │
 ├── packages/
 │   ├── core/             # Central coordinator, runtime lifecycle & structured logging
+│   ├── agent/            # Autonomous ReAct reasoning loop, context management & test-repair engine
+│   ├── llm/              # Multi-provider client (OpenAI, Anthropic, Gemini, Ollama, LM Studio)
 │   ├── security/         # Sandboxing, path traversal guard, secret detection, permissions
 │   ├── tools/            # BaseTool framework, tool registry & execution pipeline
 │   ├── filesystem/       # Safe, bounded workspace filesystem operations
@@ -34,20 +36,24 @@ AgentForge Monorepo
 
 ---
 
-## Key Features (Phase 1: Foundation)
+## Key Features
 
+- **Multi-Provider LLM Orchestration**: Direct integration with OpenAI (`gpt-4o`), Anthropic Claude (`claude-3-7-sonnet`), Google Gemini (`gemini-2.5-flash`), Mistral, and local open-source models via Ollama and LM Studio.
+- **Autonomous ReAct Reasoning Engine**: Dynamic system prompt construction, native tool schema translation, step-by-step reasoning cycle (`Thought -> Tool Call -> Security Check -> Execution -> Observation -> Resolution`).
+- **Self-Healing Test-and-Repair Engine**: Runs project test suites, captures failure stack traces, formulates targeted repair plans, and automatically modifies code until tests pass.
 - **Defense-in-Depth Security**: Workspace path-traversal blocker, secret detection & redaction, dangerous command inspection (`rm -rf`, disk wipes, fork bombs), and human-in-the-loop permission tiers (`readonly`, `safe`, `interactive`, `autonomous`).
 - **Sandboxed Filesystem**: Atomic file writes, targeted multi-chunk code edits, file size safeguards, binary detection, and recursive search.
 - **Safe Terminal Execution**: Cross-platform process execution with configurable timeouts, buffer limit protections, and secret scrubbing on stdout/stderr.
 - **Native Git Integration**: Structured branch/status detection, unified diffs, commit log parsing, and commit generation with message checks.
 - **Modular Tool Registry**: 12 built-in tools with full JSON Schema / OpenAPI schema export, ready for LLM function calling.
-- **System Diagnostics**: Built-in `agentforge doctor` verifying Node, Git, Workspace permissions, and tool health.
+- **Interactive Developer REPL**: Built-in `agentforge chat` for conversational codebase investigation and `agentforge doctor` for system diagnostics.
 
 ---
 
 ## Installation & Setup
 
 ### Prerequisites
+
 - Node.js >= 20.0.0
 - pnpm >= 9.0.0
 - Git
@@ -97,15 +103,48 @@ agentforge tools list
 agentforge tools inspect read_file
 ```
 
+### Autonomous Task Execution
+
+Run an end-to-end autonomous engineering task on the repository:
+
+```bash
+# Execute a task using configured provider
+agentforge run "Add unit tests for the path validator"
+
+# Override model or maximum reasoning steps
+agentforge run "Refactor configuration loader" --model gpt-4o --max-steps 15
+```
+
+### Interactive Conversational REPL
+
+Engage directly with AgentForge to inspect codebase structure, ask architectural questions, or perform targeted actions:
+
+```bash
+agentforge chat
+```
+
+### Self-Healing Test-and-Repair
+
+Run project tests and let AgentForge autonomously investigate failures, edit code, and re-run tests until green:
+
+```bash
+agentforge fix
+agentforge fix "pnpm test"
+```
+
 ### Configuration Management
 
 ```bash
 # View current configuration
 agentforge config list
 
-# Set local provider
+# Set local provider (Ollama)
 agentforge config set provider.type ollama
-agentforge config set provider.model llama3
+agentforge config set provider.model qwen2.5-coder:7b
+
+# Set cloud provider (OpenAI / Anthropic / Gemini)
+agentforge config set provider.type anthropic
+agentforge config set provider.model claude-3-7-sonnet-20250219
 ```
 
 ### Git Integration
@@ -126,6 +165,7 @@ agentforge git commit -m "feat: implement security path validator"
 ## Safety & Security Policy
 
 AgentForge adheres to strict safety boundaries:
+
 1. **Never writes outside workspace root**: Directory traversal attempts (`../`) are detected and blocked.
 2. **Never executes destructive commands**: Commands like `rm -rf /`, formatting utilities, or fork bombs are intercepted and blocked before execution.
 3. **Never leaks secrets**: API keys (`sk-...`), private keys (`-----BEGIN PRIVATE KEY-----`), and `.env` credentials are automatically redacted from outputs and logs.
@@ -156,10 +196,10 @@ pnpm format
 ## Roadmap
 
 - [x] **Phase 1 — Foundation**: Monorepo, Security, Safe Filesystem, Terminal, Git, Tool Pipeline, CLI.
-- [ ] **Phase 2 — LLM Providers**: Multi-provider abstraction (OpenAI, Anthropic, Ollama, LM Studio, Mistral), streaming, function calling.
-- [ ] **Phase 3 — Autonomous Agent Loop**: Planner, context manager, reflection, validation & repair loop.
-- [ ] **Phase 4 — Repository Intelligence**: Framework detector, language detection, AST parser, symbol extraction.
-- [ ] **Phase 5 — Persistent Memory**: Long-term memory, session state, project context compression.
+- [x] **Phase 2 — Multi-Provider LLM**: OpenAI, Anthropic Claude, Google Gemini, Mistral, Ollama, LM Studio with native tool calling schemas.
+- [x] **Phase 3 — Autonomous Agent Engine**: ReAct reasoning loop, context management, test-and-repair engine, interactive REPL.
+- [ ] **Phase 4 — Repository Intelligence**: Framework detector, AST parser, symbol indexer, dependency graph analyzer.
+- [ ] **Phase 5 — Persistent Memory**: Long-term vector memory, session state, project context compression.
 - [ ] **Phase 6 — Web Dashboard**: Real-time agent timeline, file diffs, live terminal.
 - [ ] **Phase 7 — Ecosystem**: Plugin system, custom tools, VS Code extension.
 

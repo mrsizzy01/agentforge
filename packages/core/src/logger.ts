@@ -44,9 +44,12 @@ export class Logger {
   }
 
   public error(message: string, error?: Error | unknown, context?: Record<string, unknown>): void {
-    const errObj = error instanceof Error
-      ? { errorMessage: error.message, stack: error.stack }
-      : error ? { error } : {};
+    const errObj =
+      error instanceof Error
+        ? { errorMessage: error.message, stack: error.stack }
+        : error
+          ? { error }
+          : {};
     this.log('error', message, { ...errObj, ...context });
   }
 
@@ -74,9 +77,8 @@ export class Logger {
 
     // Pretty format
     const prefix = this.getPrefix(level);
-    const contextStr = context && Object.keys(context).length > 0
-      ? ` ${pc.dim(JSON.stringify(context))}`
-      : '';
+    const contextStr =
+      context && Object.keys(context).length > 0 ? ` ${pc.dim(JSON.stringify(context))}` : '';
 
     // eslint-disable-next-line no-console
     console.log(`${prefix} ${message}${contextStr}`);

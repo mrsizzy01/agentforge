@@ -1,8 +1,4 @@
-import {
-  PermissionLevel,
-  ToolPermissionCategory,
-  SecurityCheckResult,
-} from '@agentforge/types';
+import { PermissionLevel, ToolPermissionCategory, SecurityCheckResult } from '@agentforge/types';
 
 export interface PermissionEvaluationInput {
   category: ToolPermissionCategory;
@@ -40,7 +36,10 @@ export class PermissionManager {
 
     // 1. Readonly level: only read operations are permitted
     if (this.level === 'readonly') {
-      if (category === 'read' || (category === 'git' && ['git_status', 'git_diff', 'git_log'].includes(toolName))) {
+      if (
+        category === 'read' ||
+        (category === 'git' && ['git_status', 'git_diff', 'git_log'].includes(toolName))
+      ) {
         return { verdict: 'allow', category };
       }
       return {
