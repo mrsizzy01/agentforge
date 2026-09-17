@@ -23,7 +23,7 @@ describe('AgentForgeRuntime', () => {
     const runtime = new AgentForgeRuntime({ workspaceRoot: tempDir });
     const tools = runtime.registry.getAll();
 
-    expect(tools.length).toBe(20);
+    expect(tools.length).toBe(22);
     expect(runtime.registry.has('read_file')).toBe(true);
     expect(runtime.registry.has('write_file')).toBe(true);
     expect(runtime.registry.has('edit_file')).toBe(true);
@@ -32,6 +32,7 @@ describe('AgentForgeRuntime', () => {
     expect(runtime.registry.has('list_directory')).toBe(true);
     expect(runtime.registry.has('search_files')).toBe(true);
     expect(runtime.registry.has('search_code')).toBe(true);
+    expect(runtime.registry.has('bm25_search')).toBe(true);
     expect(runtime.registry.has('get_file_outline')).toBe(true);
     expect(runtime.registry.has('find_symbols')).toBe(true);
     expect(runtime.registry.has('run_command')).toBe(true);
@@ -43,6 +44,7 @@ describe('AgentForgeRuntime', () => {
     expect(runtime.registry.has('diff_review')).toBe(true);
     expect(runtime.registry.has('create_plan')).toBe(true);
     expect(runtime.registry.has('check_diagnostics')).toBe(true);
+    expect(runtime.registry.has('delegate_task')).toBe(true);
     expect(runtime.registry.has('read_url')).toBe(true);
   });
 

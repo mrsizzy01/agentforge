@@ -6,6 +6,7 @@ import {
 } from '@agentforge/llm';
 import { AgentForgeRuntime } from '@agentforge/core';
 import { ToolContext, ToolResult } from '@agentforge/types';
+import { DelegateTaskTool } from '@agentforge/tools';
 import { ContextManager } from './context.js';
 import { SystemPromptBuilder } from './prompt.js';
 
@@ -86,6 +87,28 @@ export class ReActAgent {
       parameters: d.inputSchemaJson as any,
     }));
 
+    // Configure Sub-Agent delegation runner
+    const delegateTool = this.runtime.tools.get('delegate_task') as DelegateTaskTool | undefined;
+    if (delegateTool && typeof delegateTool.setRunner === 'function') {
+      delegateTool.setRunner(async (subTask, maxChildSteps, childContext) => {
+        const childAgent = new ReActAgent(this.runtime, this.llm);
+        await childAgent.initialize(
+          'You are an autonomous sub-agent. Focus purely on your assigned objective and return a concise, high-value summary of your findings and actions.',
+        );
+        const childRes = await childAgent.runTask(subTask, {
+          maxSteps: maxChildSteps,
+          temperature: options.temperature,
+          interactive: false,
+          abortSignal: childContext.abortSignal,
+        });
+        return {
+          success: childRes.success,
+          answer: childRes.finalAnswer,
+          stepsExecuted: childRes.stepsExecuted,
+        };
+      });
+    }
+
     let stepsExecuted = 0;
     let finalAnswer = '';
 
@@ -112,12 +135,60 @@ export class ReActAgent {
 
       let response: LLMCompletionResponse;
       try {
-        response = await this.llm.complete({
-          messages: this.context.getMessages(),
-          tools: llmTools.length > 0 ? llmTools : undefined,
-          temperature: options.temperature ?? 0.2,
-          abortSignal: options.abortSignal,
-        });
+        if (typeof this.llm.stream === 'function' && options.onToken) {
+          let streamedContent = '';
+          const toolCallsMap: Map<number, { id: string; name: string; argsStr: string }> = new Map();
+
+          for await (const chunk of this.llm.stream({
+            messages: this.context.getMessages(),
+            tools: llmTools.length > 0 ? llmTools : undefined,
+            temperature: options.temperature ?? 0.2,
+            abortSignal: options.abortSignal,
+          })) {
+            if (chunk.deltaText) {
+              streamedContent += chunk.deltaText;
+              options.onToken(chunk.deltaText);
+            }
+
+            if (chunk.toolCallDelta) {
+              const { index, id, name, argumentsDelta } = chunk.toolCallDelta;
+              const existing = toolCallsMap.get(index) || { id: '', name: '', argsStr: '' };
+              if (id) existing.id = id;
+              if (name) existing.name = name;
+              if (argumentsDelta) existing.argsStr += argumentsDelta;
+              toolCallsMap.set(index, existing);
+            }
+          }
+
+          const parsedToolCalls: ToolCall[] = [];
+          for (const tc of toolCallsMap.values()) {
+            let parsedArgs: Record<string, unknown> = {};
+            try {
+              parsedArgs = JSON.parse(tc.argsStr || '{}');
+            } catch {
+              parsedArgs = {};
+            }
+            parsedToolCalls.push({
+              id: tc.id || `call_${Date.now()}`,
+              name: tc.name,
+              arguments: parsedArgs,
+            });
+          }
+
+          response = {
+            content: streamedContent,
+            toolCalls: parsedToolCalls.length > 0 ? parsedToolCalls : undefined,
+            finishReason: parsedToolCalls.length > 0 ? 'tool_calls' : 'stop',
+            model: this.llm.defaultModel,
+          };
+        } else {
+          response = await this.llm.complete({
+            messages: this.context.getMessages(),
+            tools: llmTools.length > 0 ? llmTools : undefined,
+            temperature: options.temperature ?? 0.2,
+            abortSignal: options.abortSignal,
+          });
+        }
       } catch (err) {
         const message = err instanceof Error ? err.message : String(err);
         return {

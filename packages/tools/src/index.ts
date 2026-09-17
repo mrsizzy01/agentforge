@@ -9,6 +9,7 @@ export * from './filesystem/delete-file.js';
 export * from './filesystem/list-dir.js';
 export * from './filesystem/search-files.js';
 export * from './filesystem/search-code.js';
+export * from './filesystem/bm25-search.js';
 export * from './terminal/run-command.js';
 export * from './terminal/test-runner.js';
 export * from './git/git-status.js';
@@ -20,4 +21,6 @@ export * from './intelligence/outline.js';
 export * from './intelligence/symbols.js';
 export * from './intelligence/plan.js';
 export * from './intelligence/diagnostic.js';
+export * from './intelligence/delegate.js';
 export * from './web/read-url.js';
+

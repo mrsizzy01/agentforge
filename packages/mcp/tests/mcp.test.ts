@@ -75,15 +75,17 @@ describe('@agentforge/mcp Server', () => {
     expect(sentResponses).toHaveLength(1);
     const tools = sentResponses[0].result?.tools as any[];
     expect(tools).toBeDefined();
-    expect(tools.length).toBe(20);
+    expect(tools.length).toBe(22);
 
     const toolNames = tools.map((t) => t.name);
     expect(toolNames).toContain('read_file');
     expect(toolNames).toContain('write_file');
     expect(toolNames).toContain('apply_patch');
+    expect(toolNames).toContain('bm25_search');
     expect(toolNames).toContain('get_file_outline');
     expect(toolNames).toContain('find_symbols');
     expect(toolNames).toContain('check_diagnostics');
+    expect(toolNames).toContain('delegate_task');
     expect(toolNames).toContain('read_url');
     expect(toolNames).toContain('diff_review');
     expect(toolNames).toContain('run_tests');

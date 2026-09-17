@@ -22,6 +22,7 @@ import {
   ListDirectoryTool,
   SearchFilesTool,
   SearchCodeTool,
+  BM25SearchTool,
   RunCommandTool,
   TestRunnerTool,
   GitStatusTool,
@@ -33,6 +34,7 @@ import {
   FindSymbolsTool,
   PlanTool,
   CheckDiagnosticsTool,
+  DelegateTaskTool,
   ReadUrlTool,
 } from '@agentforge/tools';
 import { Logger } from './logger.js';
@@ -129,6 +131,7 @@ export class AgentForgeRuntime {
     this.registry.register(new ListDirectoryTool(this.fs));
     this.registry.register(new SearchFilesTool(this.fs));
     this.registry.register(new SearchCodeTool(this.fs));
+    this.registry.register(new BM25SearchTool(this.fs));
 
     // Terminal tool
     this.registry.register(new RunCommandTool(this.terminal, this.safetyValidator));
@@ -148,6 +151,7 @@ export class AgentForgeRuntime {
     this.registry.register(new FindSymbolsTool(this.fs));
     this.registry.register(new PlanTool());
     this.registry.register(new CheckDiagnosticsTool(this.fs));
+    this.registry.register(new DelegateTaskTool());
 
     // Web tools
     this.registry.register(new ReadUrlTool());
