@@ -1,0 +1,39 @@
+{
+  "name": "@agentforge/tools",
+  "version": "0.1.0",
+  "description": "Extensible tool system, registry and execution pipeline for AgentForge",
+  "author": "AgentForge Contributors",
+  "license": "Apache-2.0",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "scripts": {
+    "build": "tsup src/index.ts --format esm,cjs --dts",
+    "dev": "tsup src/index.ts --format esm,cjs --dts --watch",
+    "test": "vitest run",
+    "clean": "rimraf dist"
+  },
+  "dependencies": {
+    "@agentforge/filesystem": "workspace:*",
+    "@agentforge/git": "workspace:*",
+    "@agentforge/security": "workspace:*",
+    "@agentforge/terminal": "workspace:*",
+    "@agentforge/types": "workspace:*",
+    "zod": "^3.24.2",
+    "zod-to-json-schema": "^3.24.3"
+  },
+  "devDependencies": {
+    "rimraf": "^6.0.1",
+    "tsup": "^8.4.0",
+    "typescript": "^5.7.3",
+    "vitest": "^3.0.7"
+  }
+}
