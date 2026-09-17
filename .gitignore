@@ -35,3 +35,7 @@ Thumbs.db
 
 # AgentForge local workspace data
 .agentforge/
+
+# Temporary files
+.commitmsg
+*.tmp
