@@ -4,6 +4,7 @@ export * from './executor.js';
 export * from './filesystem/read-file.js';
 export * from './filesystem/write-file.js';
 export * from './filesystem/edit-file.js';
+export * from './filesystem/apply-patch.js';
 export * from './filesystem/delete-file.js';
 export * from './filesystem/list-dir.js';
 export * from './filesystem/search-files.js';

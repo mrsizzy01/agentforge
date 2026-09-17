@@ -13,6 +13,7 @@ export interface AgentStepEvent {
   step: number;
   maxSteps: number;
   thought?: string;
+  token?: string;
   toolCall?: {
     name: string;
     arguments: Record<string, unknown>;
@@ -28,6 +29,7 @@ export interface ReActLoopOptions {
   maxSteps?: number;
   temperature?: number;
   onEvent?: (event: AgentStepEvent) => void;
+  onToken?: (token: string) => void;
   confirmAction?: (prompt: string, details?: Record<string, unknown>) => Promise<boolean>;
   abortSignal?: AbortSignal;
 }
@@ -103,6 +105,10 @@ export class ReActAgent {
         maxSteps,
       });
 
+      if (this.context.estimateTokenCount() > 60000) {
+        this.context.compactHistory(10);
+      }
+
       let response: LLMCompletionResponse;
       try {
         response = await this.llm.complete({
@@ -129,6 +135,10 @@ export class ReActAgent {
           maxSteps,
           thought: response.content,
         });
+
+        if (options.onToken) {
+          options.onToken(response.content);
+        }
       }
 
       // Add assistant response to history

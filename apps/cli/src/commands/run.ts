@@ -115,13 +115,13 @@ export async function runCommand(
   const onEvent = async (event: AgentStepEvent) => {
     if (event.thought) {
       // eslint-disable-next-line no-console
-      console.log(pc.cyan(`\n● `) + event.thought.trim());
+      console.log(pc.cyan(`\n[THINK] `) + event.thought.trim());
     }
 
     if (event.toolCall) {
       // Automatically snapshot modified files before tool execution
       const toolName = event.toolCall.name;
-      if (['write_file', 'edit_file', 'delete_file'].includes(toolName)) {
+      if (['write_file', 'edit_file', 'apply_patch', 'delete_file'].includes(toolName)) {
         const filePath = (event.toolCall.arguments as { path?: string }).path;
         if (filePath) {
           await runtime.sessions.recordFileBackup(session.id, filePath);
@@ -131,14 +131,14 @@ export async function runCommand(
       const argsPreview = JSON.stringify(event.toolCall.arguments);
       // eslint-disable-next-line no-console
       console.log(
-        pc.yellow(`▲ `) +
+        pc.yellow(`[TOOL] `) +
           pc.bold(event.toolCall.name) +
           pc.dim(` ${argsPreview.length > 120 ? argsPreview.slice(0, 120) + '...' : argsPreview}`),
       );
     }
 
     if (event.toolResult) {
-      const statusBadge = event.toolResult.success ? pc.green('✓') : pc.red('✖');
+      const statusBadge = event.toolResult.success ? pc.green('[OK]') : pc.red('[FAIL]');
       const preview = event.toolResult.output.trim();
       // eslint-disable-next-line no-console
       console.log(
@@ -157,7 +157,7 @@ export async function runCommand(
     }
 
     // eslint-disable-next-line no-console
-    console.log(pc.yellow(`\n▲ Security confirmation required`));
+    console.log(pc.yellow(`\n[SECURITY] Security confirmation required`));
     if (details) {
       // eslint-disable-next-line no-console
       console.log(pc.dim(JSON.stringify(details, null, 2)));

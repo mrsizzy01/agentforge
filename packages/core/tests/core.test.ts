@@ -23,10 +23,11 @@ describe('AgentForgeRuntime', () => {
     const runtime = new AgentForgeRuntime({ workspaceRoot: tempDir });
     const tools = runtime.registry.getAll();
 
-    expect(tools.length).toBe(14);
+    expect(tools.length).toBe(15);
     expect(runtime.registry.has('read_file')).toBe(true);
     expect(runtime.registry.has('write_file')).toBe(true);
     expect(runtime.registry.has('edit_file')).toBe(true);
+    expect(runtime.registry.has('apply_patch')).toBe(true);
     expect(runtime.registry.has('delete_file')).toBe(true);
     expect(runtime.registry.has('list_directory')).toBe(true);
     expect(runtime.registry.has('search_files')).toBe(true);

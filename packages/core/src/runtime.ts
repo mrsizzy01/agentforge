@@ -17,6 +17,7 @@ import {
   ReadFileTool,
   WriteFileTool,
   EditFileTool,
+  ApplyPatchTool,
   DeleteFileTool,
   ListDirectoryTool,
   SearchFilesTool,
@@ -118,6 +119,7 @@ export class AgentForgeRuntime {
     this.registry.register(new ReadFileTool(this.fs));
     this.registry.register(new WriteFileTool(this.fs));
     this.registry.register(new EditFileTool(this.fs));
+    this.registry.register(new ApplyPatchTool(this.fs));
     this.registry.register(new DeleteFileTool(this.fs));
     this.registry.register(new ListDirectoryTool(this.fs));
     this.registry.register(new SearchFilesTool(this.fs));

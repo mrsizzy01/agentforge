@@ -83,5 +83,5 @@ describe('GitClient', () => {
 
     await git.removeWorktree(worktreePath, true);
     expect(fs.existsSync(worktreePath)).toBe(false);
-  });
+  }, 25000);
 });

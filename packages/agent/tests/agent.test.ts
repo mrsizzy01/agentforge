@@ -62,6 +62,37 @@ describe('@agentforge/agent', () => {
       // Pruned to keep only last 3 non-system messages + system
       expect(messages.length).toBe(4);
     });
+
+    it('estimates token usage and compacts intermediate history', () => {
+      const context = new ContextManager({ maxHistoryMessages: 30 });
+      context.setSystemPrompt('You are AgentForge.');
+      context.addUserMessage('Primary goal: build authentication');
+
+      // Add 10 intermediate tool steps
+      for (let i = 1; i <= 10; i++) {
+        context.addAssistantMessage(`Thinking step ${i}`, [
+          { id: `call_${i}`, name: 'read_file', arguments: { path: `file_${i}.ts` } },
+        ]);
+        context.addToolResult(`call_${i}`, 'read_file', `Content of file ${i}`);
+      }
+
+      const tokenEstimate = context.estimateTokenCount();
+      expect(tokenEstimate).toBeGreaterThan(50);
+
+      const beforeCount = context.getMessages().length;
+      const { compacted, removedCount } = context.compactHistory(4);
+
+      expect(compacted).toBe(true);
+      expect(removedCount).toBeGreaterThan(0);
+
+      const messages = context.getMessages();
+      expect(messages.length).toBeLessThan(beforeCount);
+      // System prompt and primary goal are strictly preserved
+      expect(messages[0].role).toBe('system');
+      expect(messages[1].content).toContain('Primary goal: build authentication');
+      // A checkpoint summary is inserted
+      expect(messages[2].content).toContain('[CONTEXT CHECKPOINT]');
+    });
   });
 
   describe('ReActAgent Autonomous Loop', () => {
